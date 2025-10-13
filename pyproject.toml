@@ -1,0 +1,123 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "localtranscribe"
+version = "2.0.0"
+description = "Offline audio transcription with speaker diarization, optimized for Apple Silicon"
+authors = [{name = "LocalTranscribe Contributors"}]
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["transcription", "diarization", "whisper", "pyannote", "speech-to-text", "apple-silicon"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "torchaudio>=2.0.0",
+    "pyannote-audio>=3.0.0",
+    "pyannote-core>=6.0.0",
+    "pyannote-pipeline>=4.0.0",
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "pydub>=0.25.1",
+    "soundfile>=0.12.0",
+    "librosa>=0.10.0",
+    "audioread>=3.0.0",
+    "python-dotenv>=0.19.0",
+    "pyyaml>=6.0",
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
+    "huggingface-hub>=0.16.0",
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+mlx = [
+    "mlx-whisper>=0.1.0",
+    "mlx>=0.0.10",
+]
+faster = [
+    "faster-whisper>=0.10.0",
+]
+original = [
+    "openai-whisper>=20230124",
+]
+all = [
+    "mlx-whisper>=0.1.0",
+    "mlx>=0.0.10",
+    "faster-whisper>=0.10.0",
+    "openai-whisper>=20230124",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "mypy>=1.5.0",
+    "ruff>=0.0.290",
+    "pre-commit>=3.3.0",
+]
+
+[project.scripts]
+localtranscribe = "localtranscribe.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/transcribe-diarization"
+Repository = "https://github.com/yourusername/transcribe-diarization"
+Documentation = "https://github.com/yourusername/transcribe-diarization/blob/main/README.md"
+Issues = "https://github.com/yourusername/transcribe-diarization/issues"
+
+[tool.setuptools]
+packages = ["localtranscribe", "localtranscribe.core", "localtranscribe.pipeline", "localtranscribe.config", "localtranscribe.health", "localtranscribe.utils"]
+
+[tool.setuptools.package-data]
+localtranscribe = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | \.eggs
+  | \.tox
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "PT", "SIM", "RET"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=localtranscribe --cov-report=term-missing"
