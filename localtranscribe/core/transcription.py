@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pydub import AudioSegment
 
 from ..utils.errors import TranscriptionError, DependencyError, InvalidAudioFormatError
+from ..utils.download import loading_spinner, show_first_run_message, check_model_cached
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -180,7 +181,12 @@ def transcribe_with_mlx(
 
     model_repo = model_map.get(model_size, f"mlx-community/whisper-{model_size}")
 
-    result = mlx_whisper.transcribe(str(audio_file), path_or_hf_repo=model_repo, language=language)
+    # Show progress for model download
+    with loading_spinner(
+        f"Loading MLX-Whisper {model_size} model...",
+        f"MLX-Whisper loaded"
+    ):
+        result = mlx_whisper.transcribe(str(audio_file), path_or_hf_repo=model_repo, language=language)
 
     # Extract data
     text = result.get("text", "")
@@ -225,8 +231,12 @@ def transcribe_with_faster_whisper(
     if torch_device == "cpu":
         torch.set_num_threads(8)
 
-    # Load model
-    model = WhisperModel(model_size, device="cpu", compute_type=compute_type)
+    # Load model with progress indicator
+    with loading_spinner(
+        f"Loading Faster-Whisper {model_size} model...",
+        f"Faster-Whisper loaded"
+    ):
+        model = WhisperModel(model_size, device="cpu", compute_type=compute_type)
 
     # Run transcription
     segments_iter, info = model.transcribe(str(audio_file), beam_size=5, language=language)
@@ -270,8 +280,12 @@ def transcribe_with_original_whisper(
     # Setup device
     device = torch.device('mps') if torch.backends.mps.is_available() else torch.device('cpu')
 
-    # Load model
-    model = whisper.load_model(model_size, device=device)
+    # Load model with progress indicator
+    with loading_spinner(
+        f"Loading Whisper {model_size} model...",
+        f"Whisper loaded"
+    ):
+        model = whisper.load_model(model_size, device=device)
 
     # Run transcription
     result = model.transcribe(

@@ -17,6 +17,7 @@ import time
 import os
 
 from ..utils.errors import DiarizationError, HuggingFaceTokenError, InvalidAudioFormatError
+from ..utils.download import wrap_model_download, check_model_cached, loading_spinner
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pyannote.audio")
@@ -142,7 +143,16 @@ def load_diarization_pipeline(
         HuggingFaceTokenError: If token is invalid or model cannot be loaded
     """
     try:
-        pipeline = Pipeline.from_pretrained(model_name, use_auth_token=hf_token)
+        # Load pipeline with progress indicator
+        def _load_pipeline():
+            return Pipeline.from_pretrained(model_name, use_auth_token=hf_token)
+
+        pipeline = wrap_model_download(
+            _load_pipeline,
+            model_name=model_name,
+            model_type="diarization model",
+            check_cache=True,
+        )
 
         # Move to device if specified
         if device is not None:

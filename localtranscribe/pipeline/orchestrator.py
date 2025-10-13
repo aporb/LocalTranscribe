@@ -35,6 +35,7 @@ from ..utils.errors import (
     HuggingFaceTokenError,
     AudioFileNotFoundError,
 )
+from ..utils.file_safety import FileSafetyManager, OverwriteAction
 
 
 class PipelineStage(Enum):
@@ -83,6 +84,9 @@ class PipelineOrchestrator:
         output_formats: List[str] = ["txt", "json", "md"],
         hf_token: Optional[str] = None,
         base_dir: Optional[Path] = None,
+        force_overwrite: bool = False,
+        skip_existing: bool = False,
+        create_backup: bool = False,
         verbose: bool = False,
     ):
         """
@@ -101,6 +105,9 @@ class PipelineOrchestrator:
             output_formats: Output formats for transcription
             hf_token: HuggingFace token (loads from env if None)
             base_dir: Base directory for path resolution
+            force_overwrite: Force overwrite existing files without prompting
+            skip_existing: Skip processing if output files already exist
+            create_backup: Create backup of existing files before overwriting
             verbose: Enable verbose output
         """
         self.audio_file = Path(audio_file)
@@ -117,6 +124,14 @@ class PipelineOrchestrator:
 
         # Setup console for Rich output
         self.console = Console() if RICH_AVAILABLE else None
+
+        # Setup file safety manager
+        self.file_safety = FileSafetyManager(
+            force=force_overwrite,
+            skip_existing=skip_existing,
+            create_backup=create_backup,
+            interactive=not (force_overwrite or skip_existing),
+        )
 
         # Path resolver
         self.path_resolver = PathResolver(base_dir=base_dir)
@@ -182,6 +197,30 @@ class PipelineOrchestrator:
 
         # Ensure output directory exists
         self.output_dir = self.path_resolver.ensure_directory(self.output_dir)
+
+        # Check for existing output files
+        base_name = self.audio_file.stem
+        potential_outputs = [
+            self.output_dir / f"{base_name}_diarization.md",
+            self.output_dir / f"{base_name}_transcript.txt",
+            self.output_dir / f"{base_name}_transcript.json",
+            self.output_dir / f"{base_name}_transcript.md",
+            self.output_dir / f"{base_name}_combined.md",
+        ]
+
+        existing_files = [f for f in potential_outputs if f.exists()]
+        if existing_files and self.file_safety.skip_existing:
+            files_list = "\n  • ".join(str(f.name) for f in existing_files)
+            raise PipelineError(
+                f"Output files already exist:\n  • {files_list}",
+                suggestions=[
+                    "Use --force to overwrite existing files",
+                    "Use --backup to create backups before overwriting",
+                    "Specify a different output directory",
+                    "Rename or move existing files",
+                ],
+                context={"existing_files": [str(f) for f in existing_files]},
+            )
 
         self.stage_times[PipelineStage.VALIDATION] = time.time() - stage_start
 
