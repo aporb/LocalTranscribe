@@ -1,0 +1,340 @@
+# LocalTranscribe Configuration File
+#
+# This file demonstrates the recommended configuration structure for LocalTranscribe.
+# Place this file in your project root or specify with --config flag.
+#
+# Usage:
+#   localtranscribe process audio.mp3 --config config.yaml
+#   localtranscribe batch ./audio/ --config config.yaml
+
+# =============================================================================
+# Default Settings
+# =============================================================================
+# These settings apply to all operations unless overridden by CLI arguments
+
+defaults:
+  # Whisper model size: tiny, base, small, medium, large
+  # Larger models are more accurate but slower and use more memory
+  # - tiny: Fastest, ~1GB RAM, good for testing
+  # - base: Balanced, ~1.5GB RAM, recommended default
+  # - small: Better accuracy, ~2.5GB RAM, for important transcripts
+  # - medium: High accuracy, ~5GB RAM, for professional use
+  # - large: Best accuracy, ~10GB RAM, for critical transcripts
+  model_size: base
+
+  # Whisper implementation: auto, mlx, faster, original
+  # - auto: Automatically select best available (recommended)
+  # - mlx: MLX-Whisper (fastest on Apple Silicon)
+  # - faster: Faster-Whisper (4x faster, works on all platforms)
+  # - original: Original OpenAI Whisper (fallback)
+  implementation: auto
+
+  # Language code (ISO 639-1) or null for auto-detection
+  # Examples: en (English), es (Spanish), fr (French), de (German), etc.
+  # Set to null or remove to auto-detect language
+  language: null
+
+  # Speaker detection settings
+  speakers:
+    # Exact number of speakers (overrides min/max if specified)
+    num_speakers: null
+
+    # Minimum and maximum speaker range (used if num_speakers is null)
+    min_speakers: 2
+    max_speakers: 4
+
+  # Output formats to generate: txt, srt, json, md
+  # Can include any combination. At least one is required.
+  output_formats:
+    - txt   # Plain text transcript
+    - srt   # Subtitle format with timestamps
+    - json  # Structured data with metadata
+    - md    # Markdown with formatting
+
+  # Whether to skip speaker diarization (transcription only)
+  skip_diarization: false
+
+# =============================================================================
+# Path Configuration
+# =============================================================================
+
+paths:
+  # Default input directory for audio files
+  # Relative paths are relative to project root
+  input_dir: ./input
+
+  # Default output directory for transcripts
+  output_dir: ./output
+
+  # Cache directory for downloaded models (optional)
+  # If not specified, uses system default: ~/.cache/localtranscribe
+  cache_dir: null
+
+  # Path to speaker labels file (optional)
+  # JSON file mapping speaker IDs to names
+  # Example: {"SPEAKER_00": "John Smith", "SPEAKER_01": "Jane Doe"}
+  labels_file: null
+
+# =============================================================================
+# Performance Configuration
+# =============================================================================
+
+performance:
+  # Maximum number of parallel workers for batch processing
+  # - 1: Process files sequentially (safest, lowest memory)
+  # - 2: Good balance for most systems (recommended)
+  # - 4+: High-memory systems only (16GB+ RAM)
+  # Note: GPU memory is shared, so more workers = more memory usage
+  max_workers: 2
+
+  # MLX cache limit in MB (Apple Silicon only)
+  # Controls memory usage for MLX-Whisper
+  # - 512: For 8GB RAM systems
+  # - 1024: For 16GB RAM systems (recommended)
+  # - 2048: For 32GB+ RAM systems
+  cache_limit_mb: 1024
+
+  # Number of CPU threads for PyTorch operations
+  # Adjust based on your CPU:
+  # - M1/M2/M3 Base: 6
+  # - M1/M2/M3 Pro: 8
+  # - M1/M2/M3 Max: 10-12
+  # - M4 Pro: 8-10
+  # - Intel Macs: 4-8
+  cpu_threads: 8
+
+  # Whether to use MPS (Metal Performance Shaders) acceleration
+  # Only available on Apple Silicon Macs
+  # Set to false to force CPU mode
+  use_mps: true
+
+# =============================================================================
+# Diarization Configuration
+# =============================================================================
+
+diarization:
+  # Pyannote model to use
+  # - pyannote/speaker-diarization-3.1 (recommended)
+  # - pyannote/speaker-diarization-community-1 (alternative)
+  model: pyannote/speaker-diarization-3.1
+
+  # Minimum segment duration in seconds
+  # Shorter segments may be merged with adjacent segments
+  min_segment_duration: 2.0
+
+  # Minimum silence duration in seconds
+  # Used for splitting speaker segments
+  min_silence_duration: 0.5
+
+# =============================================================================
+# Transcription Configuration
+# =============================================================================
+
+transcription:
+  # Beam size for decoding (higher = more accurate but slower)
+  # Typical values: 1 (greedy), 5 (default), 10 (high quality)
+  beam_size: 5
+
+  # Temperature for sampling (0.0 - 1.0)
+  # - 0.0: Deterministic (always same result)
+  # - 0.2-0.8: Standard range
+  # - 1.0: Maximum variability
+  temperature: 0.0
+
+  # Whether to use Voice Activity Detection (VAD) filtering
+  # Helps skip silence and non-speech segments
+  vad_filter: true
+
+  # Initial prompt to guide transcription (optional)
+  # Can improve accuracy for domain-specific content
+  # Example: "This is a medical consultation between a doctor and patient."
+  initial_prompt: null
+
+  # Word-level timestamps (if supported by implementation)
+  # More precise timing but slower processing
+  word_timestamps: false
+
+# =============================================================================
+# Output Configuration
+# =============================================================================
+
+output:
+  # Whether to include confidence scores in output
+  include_confidence_scores: true
+
+  # Whether to include speaker time statistics
+  include_speaker_stats: true
+
+  # Markdown formatting style: detailed, compact, minimal
+  # - detailed: Full formatting with all metadata (default)
+  # - compact: Less whitespace, smaller file size
+  # - minimal: Plain text with minimal formatting
+  markdown_format: detailed
+
+  # Whether to overwrite existing files without confirmation
+  # If false, will prompt before overwriting
+  force_overwrite: false
+
+  # Include raw segment data in JSON output
+  include_raw_segments: true
+
+  # Timestamp format in markdown: seconds, minutes, hms
+  # - seconds: 123.45s
+  # - minutes: 2:03.45
+  # - hms: 00:02:03.45
+  timestamp_format: seconds
+
+# =============================================================================
+# Audio Preprocessing
+# =============================================================================
+
+audio:
+  # Target sample rate for processing (Hz)
+  # Models typically expect 16000 Hz
+  sample_rate: 16000
+
+  # Number of channels: 1 (mono) or 2 (stereo)
+  # Diarization works better with mono
+  channels: 1
+
+  # Audio normalization: none, peak, loudness
+  # - none: No normalization (fastest)
+  # - peak: Normalize to peak level
+  # - loudness: Normalize to target loudness (best quality)
+  normalization: none
+
+  # Remove silence from audio before processing
+  # Can speed up processing but may affect diarization
+  remove_silence: false
+
+# =============================================================================
+# Environment Configuration
+# =============================================================================
+
+environment:
+  # HuggingFace token (can also be set in .env file or environment variable)
+  # Get token from: https://huggingface.co/settings/tokens
+  # Required for speaker diarization
+  huggingface_token: null  # Use .env file instead
+
+  # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_level: INFO
+
+  # Log file path (optional)
+  # If specified, logs will be written to this file
+  log_file: null
+
+  # Whether to show progress bars
+  show_progress: true
+
+  # Color output in terminal
+  color_output: true
+
+# =============================================================================
+# Batch Processing Configuration
+# =============================================================================
+
+batch:
+  # File patterns to match in batch mode
+  # Used when scanning directories for audio files
+  patterns:
+    - "*.mp3"
+    - "*.wav"
+    - "*.ogg"
+    - "*.m4a"
+    - "*.flac"
+
+  # Whether to search subdirectories recursively
+  recursive: false
+
+  # Whether to continue processing if a file fails
+  # If false, batch processing stops on first error
+  continue_on_error: true
+
+  # Sort order for batch processing: name, size, date
+  # - name: Alphabetical order
+  # - size: Smallest to largest
+  # - date: Oldest to newest
+  sort_by: name
+
+  # Save batch summary report
+  save_summary: true
+
+  # Summary file format: json, csv, md
+  summary_format: json
+
+# =============================================================================
+# Advanced Settings
+# =============================================================================
+
+advanced:
+  # Model download behavior: auto, always, never
+  # - auto: Download if not cached (default)
+  # - always: Always check for updates
+  # - never: Use cached only, fail if not available
+  model_download: auto
+
+  # Maximum file size in MB (0 = no limit)
+  # Files larger than this will be rejected
+  max_file_size_mb: 0
+
+  # Temporary file directory
+  # Used for audio preprocessing
+  temp_dir: null  # System default
+
+  # Clean up temporary files after processing
+  cleanup_temp_files: true
+
+# =============================================================================
+# Profile-Specific Configurations
+# =============================================================================
+# You can define different profiles for different use cases
+
+profiles:
+  # Quick draft profile - fast but lower accuracy
+  quick:
+    model_size: tiny
+    beam_size: 1
+    skip_diarization: true
+    output_formats: [txt]
+
+  # High quality profile - best accuracy
+  quality:
+    model_size: large
+    beam_size: 10
+    vad_filter: true
+    word_timestamps: true
+    output_formats: [txt, srt, json, md]
+
+  # Batch processing profile - optimized for many files
+  batch_optimized:
+    model_size: base
+    max_workers: 4
+    continue_on_error: true
+    save_summary: true
+
+  # Interview profile - 2 speakers, custom labels
+  interview:
+    speakers:
+      num_speakers: 2
+    output_formats: [md, json]
+    include_speaker_stats: true
+
+# =============================================================================
+# Usage Examples
+# =============================================================================
+#
+# Use default configuration:
+#   localtranscribe process audio.mp3
+#
+# Use this config file:
+#   localtranscribe process audio.mp3 --config config.yaml
+#
+# Use a specific profile:
+#   localtranscribe process audio.mp3 --config config.yaml --profile quality
+#
+# Override specific settings:
+#   localtranscribe process audio.mp3 --config config.yaml --model medium --speakers 3
+#
+# Batch processing with config:
+#   localtranscribe batch ./audio/ --config config.yaml --profile batch_optimized
