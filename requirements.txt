@@ -1,0 +1,84 @@
+# LocalTranscribe - Speaker Diarization and Transcription for macOS M4 Pro
+# Requirements for all Python scripts in scripts/ folder
+
+# ============================================================================
+# CORE DEPENDENCIES (Required for all scripts)
+# ============================================================================
+
+# PyTorch and TorchAudio (for diarization and some transcription implementations)
+torch==2.8.0
+torchaudio==2.8.0
+
+# Pyannote Audio for speaker diarization (diarization.py)
+pyannote-audio==4.0.1
+pyannote-core==6.0.1
+pyannote-pipeline==4.0.0
+
+# Audio processing
+pydub==0.25.1
+soundfile==0.13.1
+librosa==0.11.0
+audioread==3.0.1
+
+# Environment variables
+python-dotenv>=0.19.0
+
+# Progress bars and utilities
+tqdm==4.67.1
+rich==14.2.0
+
+# Hugging Face integration
+huggingface-hub==0.35.3
+
+# Scientific computing
+numpy==2.3.3
+scipy==1.16.2
+
+# ============================================================================
+# TRANSCRIPTION IMPLEMENTATIONS (Choose one or install all)
+# ============================================================================
+
+# OPTION 1: MLX-Whisper (Apple Silicon optimized - RECOMMENDED for M4 Pro)
+# Uncomment these lines if you want to use MLX-Whisper
+# mlx-whisper>=0.1.0
+# mlx>=0.15.0
+
+# OPTION 2: Faster-Whisper (Good alternative, works on CPU efficiently)
+# Uncomment this line if you want to use Faster-Whisper
+# faster-whisper>=1.0.0
+
+# OPTION 3: OpenAI Whisper (Original implementation with MPS support)
+# Already included above as openai-whisper
+openai-whisper==20250625
+
+# ============================================================================
+# ADDITIONAL OPTIONAL DEPENDENCIES
+# ============================================================================
+
+# For advanced audio augmentation (optional)
+# torch-audiomentations==0.12.0
+
+# For model optimization (optional)
+# safetensors==0.6.2
+
+# For visualization (optional)
+# matplotlib==3.10.7
+
+# ============================================================================
+# NOTES
+# ============================================================================
+#
+# MLX-Whisper is recommended for M4 Pro as it's optimized for Apple Silicon
+# Install with: pip install mlx-whisper mlx
+#
+# Faster-Whisper is a good alternative if you want CPU-only processing
+# Install with: pip install faster-whisper
+#
+# OpenAI Whisper works with MPS (Metal Performance Shaders) on M4 Pro
+# Already included in this requirements.txt
+#
+# To install all dependencies:
+# pip install -r requirements.txt
+#
+# For audio file format conversion, you may also need FFmpeg installed:
+# brew install ffmpeg
