@@ -4,5 +4,6 @@ Health check utilities for LocalTranscribe.
 Validates system requirements and dependencies.
 """
 
-# Will be populated with health check functions
-__all__ = []
+from .doctor import run_health_check, HealthChecker, CheckResult
+
+__all__ = ["run_health_check", "HealthChecker", "CheckResult"]

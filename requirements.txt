@@ -1,15 +1,15 @@
-# LocalTranscribe - Speaker Diarization and Transcription for macOS M4 Pro
-# Requirements for all Python scripts in scripts/ folder
+# LocalTranscribe v2.0 - Speaker Diarization and Transcription CLI
+# Complete requirements for the LocalTranscribe package
 
 # ============================================================================
-# CORE DEPENDENCIES (Required for all scripts)
+# CORE DEPENDENCIES (Required)
 # ============================================================================
 
-# PyTorch and TorchAudio (for diarization and some transcription implementations)
+# PyTorch and TorchAudio (for diarization and transcription)
 torch==2.8.0
 torchaudio==2.8.0
 
-# Pyannote Audio for speaker diarization (diarization.py)
+# Pyannote Audio for speaker diarization
 pyannote-audio==4.0.1
 pyannote-core==6.0.1
 pyannote-pipeline==4.0.0
@@ -20,12 +20,14 @@ soundfile==0.13.1
 librosa==0.11.0
 audioread==3.0.1
 
-# Environment variables
-python-dotenv>=0.19.0
-
-# Progress bars and utilities
-tqdm==4.67.1
+# CLI framework and UI
+typer[all]>=0.9.0
 rich==14.2.0
+tqdm==4.67.1
+
+# Configuration management
+python-dotenv>=0.19.0
+pyyaml>=6.0.0
 
 # Hugging Face integration
 huggingface-hub==0.35.3

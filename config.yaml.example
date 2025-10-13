@@ -1,0 +1,103 @@
+# LocalTranscribe Configuration Example
+#
+# Copy this file to one of the following locations:
+#   - ./localtranscribe.yaml (current directory)
+#   - ./.localtranscribe/config.yaml (project local)
+#   - ~/.localtranscribe/config.yaml (user home)
+#   - ~/.config/localtranscribe/config.yaml (XDG config)
+#
+# All settings are optional - defaults will be used if not specified.
+
+# Model settings
+model:
+  # Whisper model size: tiny, base, small, medium, large
+  # Larger models are more accurate but slower
+  whisper_size: base
+
+  # Whisper implementation: auto, mlx, faster, original
+  # auto = automatically select best available implementation
+  # mlx = Apple Silicon optimized (fastest on M1/M2/M3/M4)
+  # faster = faster-whisper (good CPU performance)
+  # original = OpenAI Whisper (reference implementation)
+  whisper_implementation: auto
+
+  # Speaker diarization model from HuggingFace
+  diarization_model: pyannote/speaker-diarization-3.1
+
+# Processing settings
+processing:
+  # Skip speaker diarization (transcription only)
+  skip_diarization: false
+
+  # Force specific language (null for auto-detect)
+  # Examples: en, es, fr, de, it, pt, nl, pl, ru, ja, zh
+  language: null
+
+  # Number of speakers (null for auto-detect)
+  num_speakers: null
+
+  # Minimum number of speakers (optional)
+  min_speakers: null
+
+  # Maximum number of speakers (optional)
+  max_speakers: null
+
+# Output settings
+output:
+  # Output directory for results
+  directory: ./output
+
+  # Output formats: txt, json, srt, md
+  formats:
+    - txt
+    - json
+    - md
+
+  # Include confidence scores in output
+  include_confidence: true
+
+  # Save combined results as markdown
+  save_markdown: true
+
+# Path settings
+paths:
+  # Default input directory for audio files
+  input_dir: ./input
+
+  # Default output directory
+  output_dir: ./output
+
+  # Temporary directory (null = system temp)
+  temp_dir: null
+
+# Performance settings
+performance:
+  # Device: auto, mps, cuda, cpu
+  # auto = automatically select best available device
+  device: auto
+
+  # Number of threads (null = auto-detect)
+  num_threads: null
+
+  # MLX cache limit in MB
+  cache_limit_mb: 1024
+
+# Logging settings
+logging:
+  # Enable verbose output
+  verbose: false
+
+  # Log file path (null = no log file)
+  log_file: null
+
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  log_level: INFO
+
+# Environment variables can also override settings:
+#
+#   LOCALTRANSCRIBE_MODEL_WHISPER_SIZE=small
+#   LOCALTRANSCRIBE_OUTPUT_DIRECTORY=./results
+#   LOCALTRANSCRIBE_PROCESSING_LANGUAGE=en
+#
+# Command line arguments have highest priority, followed by
+# environment variables, then config file, then defaults.
