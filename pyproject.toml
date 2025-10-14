@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localtranscribe"
-version = "2.0.2b0"
+version = "2.0.2b1"
 description = "Privacy-first audio transcription with speaker diarization. Entirely offline."
 authors = [{name = "LocalTranscribe Contributors"}]
 readme = "README.md"

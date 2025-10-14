@@ -376,7 +376,7 @@ This command diagnoses common setup issues and suggests fixes.
 
 ## What's New
 
-### v2.0.2-beta (Current)
+### v2.0.2b1 (Current)
 - ✅ Updated package description and metadata
 - ✅ Enhanced README with PyPI link
 - ✅ Professional documentation polish

@@ -15,7 +15,7 @@ Advanced Usage:
     >>> transcription = run_transcription(audio_file, model_size="base")
 """
 
-__version__ = "2.0.2-beta"
+__version__ = "2.0.2b1"
 __author__ = "LocalTranscribe Contributors"
 __license__ = "MIT"
 
