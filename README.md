@@ -1,17 +1,17 @@
 # LocalTranscribe
 
-**Turn audio into speaker-labeled transcripts. Entirely offline. One command.**
+**Privacy-first audio transcription with speaker diarization. Entirely offline.**
 
-Transform recordings into detailed transcripts showing who said what and when—all on your Mac, no cloud services required.
+Transform recordings into detailed transcripts showing who said what and when—all on your Mac, with complete privacy.
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-2.0.0--beta-blue)
-![Python](https://img.shields.io/badge/python-3.9+-green)
-![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)
-![License](https://img.shields.io/badge/license-MIT-orange)
+[![PyPI version](https://img.shields.io/pypi/v/localtranscribe?color=blue)](https://pypi.org/project/localtranscribe/)
+[![Python](https://img.shields.io/badge/python-3.9+-green)](https://www.python.org/downloads/)
+[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](https://www.apple.com/macos/)
+[![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
-[Quick Start](#quick-start) • [Examples](#examples) • [SDK](docs/SDK_REFERENCE.md) • [Troubleshooting](docs/TROUBLESHOOTING.md)
+[Quick Start](#quick-start) • [Installation](#installation) • [Examples](#examples) • [Documentation](#documentation)
 
 </div>
 
@@ -21,68 +21,113 @@ Transform recordings into detailed transcripts showing who said what and when—
 
 | Feature | LocalTranscribe | Cloud Services |
 |---------|----------------|----------------|
-| **Privacy** | 100% offline | Data uploaded to servers |
-| **Cost** | Free forever | $10-50/month |
-| **Speaker ID** | Automatic | Often extra cost |
-| **Speed (M1/M2)** | Real-time to 2x | Depends on upload |
-| **Quality** | OpenAI Whisper | Varies |
+| **Privacy** | 100% offline processing | Data uploaded to third-party servers |
+| **Cost** | Free forever | $10-50/month subscription |
+| **Speaker Identification** | Automatic speaker detection | Often extra cost or unavailable |
+| **Speed (Apple Silicon)** | Real-time to 2x audio length | Depends on upload/download speed |
+| **Quality** | OpenAI Whisper models | Varies by provider |
+| **Data Ownership** | All files stay on your machine | Depends on provider terms |
 
-**Built for:** Researchers, podcasters, journalists, lawyers, content creators—anyone who needs accurate transcripts with speaker labels and complete privacy.
+**Perfect for:** Researchers, podcasters, journalists, legal professionals, content creators—anyone who needs accurate transcripts with speaker labels and complete data privacy.
+
+---
+
+## Features
+
+- **🔒 Complete Privacy** - All processing happens locally on your machine
+- **🎯 Speaker Diarization** - Automatic detection of who spoke when
+- **📝 High Accuracy** - Powered by OpenAI's Whisper models
+- **⚡️ Apple Silicon Optimized** - Blazing fast on M1/M2/M3/M4 Macs
+- **🚀 Simple CLI** - One command to transcribe any audio file
+- **📦 Python SDK** - Integrate transcription into your applications
+- **🔄 Batch Processing** - Process multiple files simultaneously
+- **📊 Multiple Formats** - Output as TXT, JSON, SRT, or Markdown
 
 ---
 
 ## Quick Start
 
-### 1. Install
+### Install from PyPI
 
 ```bash
-# Clone repository
-git clone https://github.com/aporb/transcribe-diarization.git
-cd transcribe-diarization
-
-# Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install
-pip install -e .
+pip install localtranscribe
 ```
 
-### 2. Setup HuggingFace Token (One-Time)
+### Setup HuggingFace Token (One-Time)
 
-Required for speaker diarization:
+Speaker diarization requires a free HuggingFace account:
 
-1. **Get token** (free): https://huggingface.co/settings/tokens
-2. **Accept model licenses** (required for both models):
-   - Main: https://huggingface.co/pyannote/speaker-diarization-3.1
-   - Dependency: https://huggingface.co/pyannote/segmentation-3.0
-3. **Add to project**:
+1. **Create account & get token**: https://huggingface.co/settings/tokens
+2. **Accept model licenses** (click "Agree" on each):
+   - https://huggingface.co/pyannote/speaker-diarization-3.1
+   - https://huggingface.co/pyannote/segmentation-3.0
+3. **Configure token**:
    ```bash
    echo "HUGGINGFACE_TOKEN=hf_your_token_here" > .env
    ```
 
-### 3. Process Audio
+### Transcribe Audio
 
 ```bash
 localtranscribe process your-audio.mp3
 ```
 
-**That's it!** Results appear in `./output/` with:
-- Speaker labels (who spoke)
-- Timestamps (when they spoke)
-- Full transcript (what they said)
+**Done!** Results appear in `./output/` with speaker labels, timestamps, and full transcript.
 
 ---
 
-## Examples
+## Installation
 
-### Basic Usage
+### Option 1: Install from PyPI (Recommended)
+
+```bash
+# Basic installation
+pip install localtranscribe
+
+# For Apple Silicon optimization (recommended for M1/M2/M3/M4)
+pip install localtranscribe[mlx]
+
+# For NVIDIA GPU support
+pip install localtranscribe[faster]
+
+# Install all optional dependencies
+pip install localtranscribe[all]
+```
+
+### Option 2: Install from Source
+
+```bash
+# Clone repository
+git clone https://github.com/aporb/LocalTranscribe.git
+cd LocalTranscribe
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install in development mode
+pip install -e .
+```
+
+### Verify Installation
+
+```bash
+localtranscribe doctor
+```
+
+This command checks your system configuration and reports any issues.
+
+---
+
+## Usage Examples
+
+### Basic Transcription
 
 ```bash
 # Transcribe with automatic settings
 localtranscribe process meeting.mp3
 
-# Know how many speakers? Tell it for better accuracy
+# Specify number of speakers for better accuracy
 localtranscribe process interview.wav --speakers 2
 
 # Use larger model for higher quality
@@ -96,10 +141,13 @@ localtranscribe process audio.mp3 --output ./results/
 
 ```bash
 # Process entire folder
-localtranscribe batch ./audio-files/ --workers 2
+localtranscribe batch ./audio-files/
+
+# Process with multiple workers
+localtranscribe batch ./recordings/ --workers 4
 
 # With custom settings
-localtranscribe batch ./recordings/ --model small --output ./transcripts/
+localtranscribe batch ./files/ --model small --output ./transcripts/
 ```
 
 ### Single-Speaker Content
@@ -113,79 +161,112 @@ localtranscribe process lecture.mp3 --skip-diarization
 
 ```bash
 localtranscribe process audio.mp3 \
-  --model medium \              # Model size: tiny|base|small|medium|large
+  --model medium \              # Model: tiny|base|small|medium|large
   --speakers 3 \                # Number of speakers (if known)
-  --language en \               # Force language
+  --language en \               # Force specific language
   --format txt json srt \       # Output formats
   --output ./results/ \         # Output directory
   --verbose                     # Show detailed progress
 ```
 
----
-
-## Python SDK
-
-Use programmatically in your Python projects:
+### Using the Python SDK
 
 ```python
 from localtranscribe import LocalTranscribe
 
-# Initialize
-lt = LocalTranscribe(model_size="base", num_speakers=2)
+# Initialize with options
+lt = LocalTranscribe(
+    model_size="base",
+    num_speakers=2,
+    output_dir="./transcripts"
+)
 
 # Process single file
 result = lt.process("meeting.mp3")
-print(result.transcript)
-print(f"Found {result.num_speakers} speakers")
+
+# Access results
+print(f"Transcript: {result.transcript}")
+print(f"Speakers: {result.num_speakers}")
+print(f"Duration: {result.duration}s")
 
 # Access detailed segments
 for segment in result.segments:
-    print(f"[{segment.speaker}] ({segment.start:.1f}s): {segment.text}")
+    print(f"[{segment.speaker}] {segment.text}")
 
 # Batch processing
 results = lt.process_batch("./audio-files/", max_workers=4)
-print(f"Processed {results.successful}/{results.total} files")
-
-# Handle errors
-for failed in results.get_failed():
-    print(f"Failed: {failed.audio_file} - {failed.error}")
+print(f"Completed: {results.successful}/{results.total}")
 ```
 
 **[→ Full SDK Documentation](docs/SDK_REFERENCE.md)**
 
 ---
 
-## Commands
+## Output Formats
 
-| Command | Description |
-|---------|-------------|
-| `process` | Transcribe single audio file |
-| `batch` | Process multiple files |
-| `doctor` | Verify installation and system setup |
-| `label` | Replace generic speaker IDs with real names |
-| `version` | Show version and system info |
-| `config` | Manage configuration |
+LocalTranscribe generates multiple output files for different use cases:
 
-Get help: `localtranscribe --help` or `localtranscribe <command> --help`
+| Format | File | Description |
+|--------|------|-------------|
+| **Markdown** | `*_combined.md` | Formatted transcript with speaker labels and timestamps |
+| **Plain Text** | `*_transcript.txt` | Simple text output for analysis |
+| **JSON** | `*_transcript.json` | Structured data for programming |
+| **SRT** | `*_transcript.srt` | Subtitle format for video |
+| **Diarization** | `*_diarization.md` | Speaker timeline and statistics |
+
+**Example Output:**
+
+```markdown
+# Combined Transcript
+
+**Audio File:** interview.mp3
+**Processing Date:** 2025-10-13 22:30:00
+
+## SPEAKER_00
+**Time:** [0.0s - 5.2s]
+
+Hello, welcome to the show. Thanks for joining us today.
+
+## SPEAKER_01
+**Time:** [5.5s - 12.8s]
+
+Thanks for having me. I'm excited to discuss our new project.
+```
 
 ---
 
-## Output Formats
+## Commands
 
-Every run creates multiple files for different use cases:
+| Command | Description | Example |
+|---------|-------------|---------|
+| `process` | Transcribe single audio file | `localtranscribe process audio.mp3` |
+| `batch` | Process multiple files | `localtranscribe batch ./folder/` |
+| `doctor` | Verify system setup | `localtranscribe doctor` |
+| `label` | Replace speaker IDs with names | `localtranscribe label output.md` |
+| `version` | Show version information | `localtranscribe version` |
+| `config` | Manage configuration | `localtranscribe config show` |
 
-| Format | File | Best For |
-|--------|------|----------|
-| **Markdown** | `*_combined.md` | Reading, documentation, sharing |
-| **Plain Text** | `*_transcript.txt` | Simple text analysis |
-| **JSON** | `*_transcript.json` | Programming, data processing |
-| **SRT** | `*_transcript.srt` | Video subtitles |
+Run `localtranscribe --help` or `localtranscribe <command> --help` for detailed options.
 
-**Combined transcript includes:**
-- Speaker labels (SPEAKER_00, SPEAKER_01, etc.)
-- Timestamp ranges for each speaker turn
-- Full transcript with proper formatting
-- Speaker statistics (who spoke most, how long)
+---
+
+## Model Selection Guide
+
+Choose the right Whisper model for your needs:
+
+| Model | Speed | Quality | RAM | Use Case |
+|-------|-------|---------|-----|----------|
+| **tiny** | Fastest | Basic | 1GB | Quick drafts, testing |
+| **base** | Fast | Good | 1GB | **Most use cases** |
+| **small** | Moderate | Better | 2GB | Professional work |
+| **medium** | Slow | Excellent | 5GB | Publication quality |
+| **large** | Very slow | Best | 10GB | Maximum accuracy |
+
+**Performance on M2 Mac (10-minute audio):**
+- `tiny`: ~30 seconds
+- `base`: ~2 minutes  ← **Recommended starting point**
+- `small`: ~5 minutes
+- `medium`: ~10 minutes
 
 ---
 
@@ -194,86 +275,58 @@ Every run creates multiple files for different use cases:
 **Recommended:**
 - Mac with Apple Silicon (M1/M2/M3/M4)
 - 16GB RAM
-- 10GB free space
-- macOS 12.0+
+- 10GB free disk space
+- macOS 12.0 or later
 
 **Minimum:**
 - Any Mac with Python 3.9+
 - 8GB RAM
-- 5GB free space
+- 5GB free disk space
+- macOS 11.0 or later
 
-**Performance (10-minute audio on M2):**
-- `tiny` model: ~30 seconds
-- `base` model: ~2 minutes
-- `small` model: ~5 minutes
-- `medium` model: ~10 minutes
-
----
-
-## Model Selection Guide
-
-| Model | Speed | Quality | RAM | Best For |
-|-------|-------|---------|-----|----------|
-| **tiny** | Fastest | Basic | 1GB | Quick drafts, testing |
-| **base** | Fast | Good | 1GB | Most use cases |
-| **small** | Moderate | Better | 2GB | Professional work |
-| **medium** | Slow | Best | 5GB | Publication-quality |
-| **large** | Very slow | Best+ | 10GB | Maximum accuracy |
-
-**Recommendation:** Start with `base`, upgrade to `medium` if accuracy matters more than speed.
+**Supported Audio Formats:**
+- MP3, WAV, M4A, OGG, FLAC, AAC, WMA
+- Video files (MP4, MOV, AVI) - audio will be extracted
 
 ---
 
-## What's New in v2.0
+## How It Works
 
-Complete rewrite focused on usability:
+LocalTranscribe uses a three-stage pipeline:
 
-**Before (v1.x):** Three manual steps
-```bash
-cd scripts
-python3 diarization.py      # Step 1
-python3 transcription.py    # Step 2
-python3 combine.py          # Step 3
-```
+### 1. Speaker Diarization (pyannote.audio)
+- Analyzes audio waveform patterns
+- Identifies distinct speakers
+- Creates precise speaker timeline
+- Optimized for 2-10 speakers
 
-**Now (v2.0):** One command
-```bash
-localtranscribe process audio.mp3
-```
+### 2. Speech-to-Text (Whisper)
+- Converts speech to text using OpenAI's Whisper
+- Automatically detects language
+- Handles accents and background noise
+- Creates timestamped segments
 
-**Other improvements:**
-- Professional CLI with helpful error messages
-- Python SDK for programmatic use
-- Batch processing support
-- Health check (`doctor` command)
-- Modular architecture
-- Beautiful terminal output
+### 3. Intelligent Combination
+- Aligns speaker labels with transcript
+- Matches timestamps accurately
+- Formats output for readability
+- Generates multiple export formats
 
-**[→ Full Changelog](docs/CHANGELOG.md)**
+**Technologies:**
+- [Whisper](https://github.com/openai/whisper) - State-of-the-art speech recognition
+- [MLX-Whisper](https://github.com/ml-explore/mlx-examples) - Apple Silicon optimization
+- [Pyannote.audio](https://github.com/pyannote/pyannote-audio) - Speaker diarization
+- [Typer](https://typer.tiangolo.com/) - Modern CLI framework
+- [Rich](https://rich.readthedocs.io/) - Beautiful terminal output
 
 ---
 
-## Installation Options
+## Documentation
 
-### Option 1: Development (Recommended)
-
-```bash
-git clone https://github.com/aporb/transcribe-diarization.git
-cd transcribe-diarization
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-### Option 2: PyPI (Coming Soon)
-
-```bash
-# When published
-pip install localtranscribe
-
-# With Apple Silicon optimization
-pip install localtranscribe[mlx]
-```
+📚 **[SDK Reference](docs/SDK_REFERENCE.md)** - Python API documentation
+🐛 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+📝 **[Changelog](docs/CHANGELOG.md)** - Version history and updates
+🚀 **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ---
 
@@ -281,105 +334,104 @@ pip install localtranscribe[mlx]
 
 ### Common Issues
 
-**Command not found:**
+**Command not found after installation:**
 ```bash
-source .venv/bin/activate  # Activate virtual environment first
+# Ensure package is installed
+pip install --upgrade localtranscribe
+
+# If using virtual environment, activate it first
+source .venv/bin/activate
 ```
 
-**HuggingFace token error:**
+**HuggingFace authentication error:**
 ```bash
-# Check .env file exists and has correct format
+# Verify token is correctly set
 cat .env
-# Should show: HUGGINGFACE_TOKEN="hf_..."
+
+# Should show: HUGGINGFACE_TOKEN=hf_...
+# Make sure you accepted both model licenses
 ```
 
 **Slow processing:**
 ```bash
-localtranscribe process audio.mp3 --model tiny  # Use faster model
+# Use a faster model
+localtranscribe process audio.mp3 --model tiny
+
+# Skip diarization for single speaker
+localtranscribe process audio.mp3 --skip-diarization
 ```
 
-**Run health check:**
+**Run system check:**
 ```bash
-localtranscribe doctor  # Diagnoses setup issues
+localtranscribe doctor
 ```
+
+This command diagnoses common setup issues and suggests fixes.
 
 **[→ Full Troubleshooting Guide](docs/TROUBLESHOOTING.md)**
 
 ---
 
-## How It Works
+## What's New
 
-1. **Speaker Diarization** (pyannote.audio)
-   - Analyzes audio waveforms
-   - Identifies when different speakers talk
-   - Creates speaker timeline
+### v2.0.1-beta (Current)
+- ✅ Published to PyPI - Install with `pip install localtranscribe`
+- ✅ Fixed pyannote.audio 3.x API compatibility
+- ✅ Updated documentation for model licenses
 
-2. **Speech-to-Text** (Whisper)
-   - Converts speech to text
-   - Detects language automatically
-   - Creates timestamped segments
+### v2.0.0-beta
+- ✅ Complete rewrite with modern CLI
+- ✅ Python SDK for programmatic use
+- ✅ Batch processing support
+- ✅ System health checks with `doctor` command
+- ✅ Modular architecture
 
-3. **Intelligent Combination**
-   - Matches speaker labels to transcript segments
-   - Aligns timestamps
-   - Generates formatted output
-
-**Technology:**
-- [Whisper](https://github.com/openai/whisper) - OpenAI's speech recognition
-- [MLX-Whisper](https://github.com/ml-explore/mlx-examples) - Apple Silicon optimization
-- [Pyannote](https://github.com/pyannote/pyannote-audio) - Speaker diarization
-- [Typer](https://typer.tiangolo.com/) - Modern CLI
-- [Rich](https://rich.readthedocs.io/) - Beautiful terminal output
-
----
-
-## Documentation
-
-📚 **[SDK Reference](docs/SDK_REFERENCE.md)** - Python API for developers  
-🐛 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues & solutions  
-📝 **[Changelog](docs/CHANGELOG.md)** - Version history  
-🚀 **[PyPI Release Guide](docs/PYPI_RELEASE.md)** - For maintainers  
+**[→ Full Changelog](docs/CHANGELOG.md)**
 
 ---
 
 ## Roadmap
 
-**v2.0-beta (Current):**
-- ✅ Modern CLI
-- ✅ Python SDK
-- ✅ Batch processing
-- ✅ Health checks
+### v2.1 (Next Release)
+- [ ] Interactive speaker labeling (replace SPEAKER_00 with real names)
+- [ ] Enhanced progress indicators for large files
+- [ ] Resume interrupted transcription jobs
+- [ ] Audio quality pre-analysis
 
-**v2.1 (Next):**
-- [ ] Interactive speaker labeling (replace SPEAKER_00 with names)
-- [ ] Progress bars for large files
-- [ ] Resume interrupted jobs
-- [ ] Audio quality analysis
-
-**v3.0 (Future):**
-- [ ] Real-time transcription
-- [ ] Web interface
-- [ ] Docker support
-- [ ] Cloud sync (optional)
+### v3.0 (Future)
+- [ ] Real-time transcription support
+- [ ] Web-based interface
+- [ ] Docker containerization
+- [ ] Optional cloud sync for results
 
 ---
 
 ## Contributing
 
-Contributions welcome! Please:
+We welcome contributions! Here's how to get started:
 
-1. Check [existing issues](https://github.com/aporb/transcribe-diarization/issues)
-2. Fork the repository
-3. Create feature branch (`git checkout -b feature/amazing-feature`)
-4. Commit changes (`git commit -m 'Add amazing feature'`)
-5. Push branch (`git push origin feature/amazing-feature`)
-6. Open Pull Request
+1. **Check existing issues** at [github.com/aporb/LocalTranscribe/issues](https://github.com/aporb/LocalTranscribe/issues)
+2. **Fork the repository** and create your feature branch
+3. **Make your changes** following the existing code style
+4. **Add tests** if applicable
+5. **Submit a pull request** with a clear description
+
+**Development Setup:**
+```bash
+git clone https://github.com/aporb/LocalTranscribe.git
+cd LocalTranscribe
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
 
 ---
 
 ## License
 
-MIT License - free for personal and commercial use.
+MIT License - Free for personal and commercial use.
+
+See [LICENSE](LICENSE) for full details.
 
 ---
 
@@ -388,29 +440,31 @@ MIT License - free for personal and commercial use.
 **Need help?**
 
 1. Run `localtranscribe doctor` to check your setup
-2. Check [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-3. Search [existing issues](https://github.com/aporb/transcribe-diarization/issues)
-4. Open new issue with `doctor` output and error message
+2. Check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+3. Search [existing issues](https://github.com/aporb/LocalTranscribe/issues)
+4. Open a [new issue](https://github.com/aporb/LocalTranscribe/issues/new) with:
+   - Output from `localtranscribe doctor`
+   - Error message or unexpected behavior
+   - Your system info (OS, Python version)
 
 ---
 
-## Credits
+## Acknowledgments
 
-Built by the LocalTranscribe community.
+LocalTranscribe builds on excellent open-source work:
 
-**Special thanks:**
-- **OpenAI** - Whisper model
-- **Apple** - MLX framework
+- **OpenAI** - Whisper speech recognition model
+- **Apple** - MLX framework for Metal acceleration
 - **Pyannote team** - Speaker diarization models
-- **HuggingFace** - Model hosting
+- **HuggingFace** - Model hosting and distribution
 
 ---
 
 <div align="center">
 
-**[⭐ Star on GitHub](https://github.com/aporb/transcribe-diarization)** • **[🐛 Report Bug](https://github.com/aporb/transcribe-diarization/issues)** • **[💡 Request Feature](https://github.com/aporb/transcribe-diarization/issues)**
+**[⭐ Star on GitHub](https://github.com/aporb/LocalTranscribe)** • **[🐛 Report Bug](https://github.com/aporb/LocalTranscribe/issues)** • **[💡 Request Feature](https://github.com/aporb/LocalTranscribe/issues)**
 
-Made with ❤️ for privacy-conscious professionals
+Made for privacy-conscious professionals who value data ownership.
 
 *Transform audio to text. Know who said what. Keep it private.*
 
