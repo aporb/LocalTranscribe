@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localtranscribe"
-version = "2.0.0"
+version = "2.0.0-beta"
 description = "Offline audio transcription with speaker diarization, optimized for Apple Silicon"
 authors = [{name = "LocalTranscribe Contributors"}]
 readme = "README.md"

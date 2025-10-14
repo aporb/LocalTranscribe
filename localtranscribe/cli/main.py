@@ -9,7 +9,7 @@ from .. import __version__
 # Initialize main app
 app = typer.Typer(
     name="localtranscribe",
-    help="<™ LocalTranscribe - Speaker diarization and transcription made easy",
+    help="LocalTranscribe - Speaker diarization and transcription made easy",
     add_completion=False,
 )
 console = Console()
