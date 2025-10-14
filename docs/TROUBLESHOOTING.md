@@ -27,11 +27,11 @@ localtranscribe version
 
 **Fix:**
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
+# Install from PyPI
+pip install localtranscribe
 
-# Reinstall if needed
-pip install -e .
+# Or if installed from source, activate virtual environment
+source .venv/bin/activate
 ```
 
 ### PyTorch or dependencies failed to install
@@ -204,13 +204,14 @@ localtranscribe process audio.mp3 --model tiny
 
 ### `Pipeline.from_pretrained() got an unexpected keyword argument 'use_auth_token'`
 
-**Meaning:** Pyannote API changed
+**Meaning:** Outdated version of LocalTranscribe
 
-**Fix:** This is a known issue with newer pyannote versions. Workaround:
+**Fix:** Update to the latest version:
 ```bash
-# Downgrade pyannote (temporary fix)
-pip install pyannote-audio==3.0.0
+pip install --upgrade localtranscribe
 ```
+
+This issue was fixed in v2.0.1-beta with updated pyannote.audio 3.x compatibility.
 
 ---
 
@@ -243,7 +244,7 @@ pip list | grep -E "localtranscribe|torch|pyannote|whisper"
 # Error message (full output)
 ```
 
-**Open issue:** https://github.com/aporb/transcribe-diarization/issues
+**Open issue:** https://github.com/aporb/LocalTranscribe/issues
 
 ---
 
