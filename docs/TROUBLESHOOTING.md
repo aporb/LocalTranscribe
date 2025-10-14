@@ -243,7 +243,7 @@ pip list | grep -E "localtranscribe|torch|pyannote|whisper"
 # Error message (full output)
 ```
 
-**Open issue:** https://github.com/yourusername/transcribe-diarization/issues
+**Open issue:** https://github.com/aporb/transcribe-diarization/issues
 
 ---
 

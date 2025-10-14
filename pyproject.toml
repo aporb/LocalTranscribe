@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localtranscribe"
-version = "2.0.0-beta"
+version = "2.0.1-beta"
 description = "Offline audio transcription with speaker diarization, optimized for Apple Silicon"
 authors = [{name = "LocalTranscribe Contributors"}]
 readme = "README.md"
@@ -77,10 +77,10 @@ dev = [
 localtranscribe = "localtranscribe.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/transcribe-diarization"
-Repository = "https://github.com/yourusername/transcribe-diarization"
-Documentation = "https://github.com/yourusername/transcribe-diarization/blob/main/README.md"
-Issues = "https://github.com/yourusername/transcribe-diarization/issues"
+Homepage = "https://github.com/aporb/LocalTranscribe"
+Repository = "https://github.com/aporb/LocalTranscribe"
+Documentation = "https://github.com/aporb/LocalTranscribe/blob/main/README.md"
+Issues = "https://github.com/aporb/LocalTranscribe/issues"
 
 [tool.setuptools]
 packages = [

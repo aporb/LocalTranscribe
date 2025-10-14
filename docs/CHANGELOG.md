@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1-beta] - 2025-10-13
+
+### 🐛 Fixed
+
+**Pyannote API Compatibility**
+- Fixed authentication parameter: Changed `use_auth_token` to `token` in pipeline loading
+- Fixed output iteration: Updated to use `.speaker_diarization` attribute instead of deprecated `.itertracks()` method
+- Updated documentation to require accepting both model licenses (main + dependency)
+
+These fixes ensure full compatibility with pyannote.audio 3.x API changes.
+
+---
+
 ## [2.0.0-beta] - 2025-10-13
 
 ### 🎉 Complete Rewrite
@@ -163,6 +176,7 @@ localtranscribe process audio.mp3 --model small --speakers 2
 
 ## Version History
 
+- **2.0.1-beta** (2025-10-13) - Pyannote API compatibility fixes
 - **2.0.0-beta** (2025-10-13) - Complete rewrite with CLI and SDK
 - **1.0.0** (2025-10-10) - Initial release with 3-script workflow
 
@@ -184,4 +198,4 @@ localtranscribe process audio.mp3 --model small --speakers 2
 
 ---
 
-**[View all releases on GitHub](https://github.com/yourusername/transcribe-diarization/releases)**
+**[View all releases on GitHub](https://github.com/aporb/transcribe-diarization/releases)**

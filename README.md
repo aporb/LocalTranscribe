@@ -37,7 +37,7 @@ Transform recordings into detailed transcripts showing who said what and when—
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/transcribe-diarization.git
+git clone https://github.com/aporb/transcribe-diarization.git
 cd transcribe-diarization
 
 # Create virtual environment
@@ -258,7 +258,7 @@ localtranscribe process audio.mp3
 ### Option 1: Development (Recommended)
 
 ```bash
-git clone https://github.com/yourusername/transcribe-diarization.git
+git clone https://github.com/aporb/transcribe-diarization.git
 cd transcribe-diarization
 python3 -m venv .venv
 source .venv/bin/activate
@@ -335,10 +335,10 @@ localtranscribe doctor  # Diagnoses setup issues
 
 ## Documentation
 
-📚 **[SDK Reference](docs/SDK_REFERENCE.md)** - Python API for developers
-🐛 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues & solutions
-📝 **[Changelog](docs/CHANGELOG.md)** - Version history
-🚀 **[PyPI Release Guide](docs/PYPI_RELEASE.md)** - For maintainers
+📚 **[SDK Reference](docs/SDK_REFERENCE.md)** - Python API for developers  
+🐛 **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues & solutions  
+📝 **[Changelog](docs/CHANGELOG.md)** - Version history  
+🚀 **[PyPI Release Guide](docs/PYPI_RELEASE.md)** - For maintainers  
 
 ---
 
@@ -368,7 +368,7 @@ localtranscribe doctor  # Diagnoses setup issues
 
 Contributions welcome! Please:
 
-1. Check [existing issues](https://github.com/yourusername/transcribe-diarization/issues)
+1. Check [existing issues](https://github.com/aporb/transcribe-diarization/issues)
 2. Fork the repository
 3. Create feature branch (`git checkout -b feature/amazing-feature`)
 4. Commit changes (`git commit -m 'Add amazing feature'`)
@@ -389,7 +389,7 @@ MIT License - free for personal and commercial use.
 
 1. Run `localtranscribe doctor` to check your setup
 2. Check [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-3. Search [existing issues](https://github.com/yourusername/transcribe-diarization/issues)
+3. Search [existing issues](https://github.com/aporb/transcribe-diarization/issues)
 4. Open new issue with `doctor` output and error message
 
 ---
@@ -408,7 +408,7 @@ Built by the LocalTranscribe community.
 
 <div align="center">
 
-**[⭐ Star on GitHub](https://github.com/yourusername/transcribe-diarization)** • **[🐛 Report Bug](https://github.com/yourusername/transcribe-diarization/issues)** • **[💡 Request Feature](https://github.com/yourusername/transcribe-diarization/issues)**
+**[⭐ Star on GitHub](https://github.com/aporb/transcribe-diarization)** • **[🐛 Report Bug](https://github.com/aporb/transcribe-diarization/issues)** • **[💡 Request Feature](https://github.com/aporb/transcribe-diarization/issues)**
 
 Made with ❤️ for privacy-conscious professionals
 
