@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localtranscribe"
-version = "2.0.1-beta"
-description = "Offline audio transcription with speaker diarization, optimized for Apple Silicon"
+version = "2.0.2b0"
+description = "Privacy-first audio transcription with speaker diarization. Entirely offline."
 authors = [{name = "LocalTranscribe Contributors"}]
 readme = "README.md"
 requires-python = ">=3.9"

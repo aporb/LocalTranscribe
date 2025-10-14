@@ -49,6 +49,8 @@ Transform recordings into detailed transcripts showing who said what and when—
 
 ### Install from PyPI
 
+**Package:** [pypi.org/project/localtranscribe](https://pypi.org/project/localtranscribe/)
+
 ```bash
 pip install localtranscribe
 ```
@@ -374,7 +376,12 @@ This command diagnoses common setup issues and suggests fixes.
 
 ## What's New
 
-### v2.0.1-beta (Current)
+### v2.0.2-beta (Current)
+- ✅ Updated package description and metadata
+- ✅ Enhanced README with PyPI link
+- ✅ Professional documentation polish
+
+### v2.0.1-beta
 - ✅ Published to PyPI - Install with `pip install localtranscribe`
 - ✅ Fixed pyannote.audio 3.x API compatibility
 - ✅ Updated documentation for model licenses

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.2-beta] - 2025-10-13
+
+### 📝 Documentation
+
+**Package Metadata Updates**
+- Updated PyPI package description to match README tagline
+- Added prominent PyPI package link in Quick Start section
+- Enhanced professional polish across all documentation
+- Clarified installation instructions with package URL
+
+---
+
 ## [2.0.1-beta] - 2025-10-13
 
 ### 🐛 Fixed
@@ -176,6 +188,7 @@ localtranscribe process audio.mp3 --model small --speakers 2
 
 ## Version History
 
+- **2.0.2-beta** (2025-10-13) - Package metadata and documentation updates
 - **2.0.1-beta** (2025-10-13) - Pyannote API compatibility fixes
 - **2.0.0-beta** (2025-10-13) - Complete rewrite with CLI and SDK
 - **1.0.0** (2025-10-10) - Initial release with 3-script workflow
