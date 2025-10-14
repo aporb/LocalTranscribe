@@ -397,22 +397,6 @@ This command diagnoses common setup issues and suggests fixes.
 
 ---
 
-## Roadmap
-
-### v2.1 (Next Release)
-- [ ] Interactive speaker labeling (replace SPEAKER_00 with real names)
-- [ ] Enhanced progress indicators for large files
-- [ ] Resume interrupted transcription jobs
-- [ ] Audio quality pre-analysis
-
-### v3.0 (Future)
-- [ ] Real-time transcription support
-- [ ] Web-based interface
-- [ ] Docker containerization
-- [ ] Optional cloud sync for results
-
----
-
 ## Contributing
 
 We welcome contributions! Here's how to get started:
