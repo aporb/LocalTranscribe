@@ -1,0 +1,37 @@
+name: Version Display
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  version-info:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          pip install -e .
+
+      - name: Get version information
+        id: version
+        run: |
+          VERSION=$(python -c "import localtranscribe; print(localtranscribe.__version__)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Package version: $VERSION"
+
+      - name: Display version info
+        run: |
+          echo "LocalTranscribe Version: ${{ steps.version.outputs.version }}"
+          echo "PyPI Package: https://pypi.org/project/localtranscribe/"
+          echo "GitHub Repository: https://github.com/aporb/LocalTranscribe"
