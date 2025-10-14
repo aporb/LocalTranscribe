@@ -74,7 +74,7 @@ dev = [
 ]
 
 [project.scripts]
-localtranscribe = "localtranscribe.cli:main"
+localtranscribe = "localtranscribe.cli.main:main"
 
 [project.urls]
 Homepage = "https://github.com/yourusername/transcribe-diarization"
@@ -83,7 +83,20 @@ Documentation = "https://github.com/yourusername/transcribe-diarization/blob/mai
 Issues = "https://github.com/yourusername/transcribe-diarization/issues"
 
 [tool.setuptools]
-packages = ["localtranscribe", "localtranscribe.core", "localtranscribe.pipeline", "localtranscribe.config", "localtranscribe.health", "localtranscribe.utils"]
+packages = [
+    "localtranscribe",
+    "localtranscribe.api",
+    "localtranscribe.cli",
+    "localtranscribe.cli.commands",
+    "localtranscribe.core",
+    "localtranscribe.pipeline",
+    "localtranscribe.config",
+    "localtranscribe.health",
+    "localtranscribe.utils",
+    "localtranscribe.batch",
+    "localtranscribe.formats",
+    "localtranscribe.labels",
+]
 
 [tool.setuptools.package-data]
 localtranscribe = ["py.typed"]
