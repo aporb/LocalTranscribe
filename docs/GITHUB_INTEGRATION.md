@@ -134,14 +134,39 @@ GitHub displays package information through:
 ## Fixing Current Version Mismatch
 
 **Current State:**
-- `pyproject.toml`: 2.0.2b2
-- `localtranscribe/__init__.py`: 2.0.2b1
+- `pyproject.toml`: 2.0.2b3
+- `localtranscribe/__init__.py`: 2.0.2b3
 
-**Fix Required:**
-```bash
-# Update __init__.py to match pyproject.toml
-# __version__ = "2.0.2b2"
-```
+**Versions are now synchronized!**
+
+## Configuring PyPI Authentication
+
+To enable automatic PyPI publishing, you need to configure a PyPI API token as a GitHub secret:
+
+### 1. Create PyPI API Token
+
+1. Go to https://pypi.org/manage/account/token/
+2. Click "Add API token"
+3. Give it a descriptive name (e.g., "GitHub Actions Release")
+4. Set scope to "Project: localtranscribe" (or "All projects" if you prefer)
+5. Click "Add token"
+6. **Copy the token immediately** (it won't be shown again)
+
+### 2. Add Token to GitHub Secrets
+
+1. Go to your GitHub repository: https://github.com/aporb/LocalTranscribe
+2. Click "Settings" tab
+3. In the left sidebar, click "Secrets and variables" → "Actions"
+4. Click "New repository secret"
+5. Name: `PYPI_API_TOKEN`
+6. Value: Paste your PyPI API token
+7. Click "Add secret"
+
+### 3. Verify Configuration
+
+After adding the secret, the next release workflow should automatically publish to PyPI.
+
+**Note:** The current release workflow (v2.0.2b3) may still fail because it was created before the PyPI token was configured. The next tag you create will use the configured token.
 
 ---
 
