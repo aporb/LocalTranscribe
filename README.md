@@ -325,10 +325,10 @@ LocalTranscribe uses a three-stage pipeline:
 
 ## Documentation
 
-📚 **[SDK Reference](docs/SDK_REFERENCE.md)** - Python API documentation
-🐛 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-📝 **[Changelog](docs/CHANGELOG.md)** - Version history and updates
-🚀 **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+📚 **[SDK Reference](docs/SDK_REFERENCE.md)** - Python API documentation  
+🐛 **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions  
+📝 **[Changelog](docs/CHANGELOG.md)** - Version history and updates  
+🚀 **[Contributing Guide](CONTRIBUTING.md)** - How to contribute  
 
 ---
 
