@@ -287,8 +287,8 @@ Choose the right Whisper model for your needs:
 - macOS 11.0 or later
 
 **Supported Audio Formats:**
-- MP3, WAV, M4A, OGG, FLAC, AAC, WMA
-- Video files (MP4, MOV, AVI) - audio will be extracted
+- Audio: MP3, WAV, OGG, M4A, FLAC, AAC, WMA, OPUS
+- Video: MP4, MOV, AVI, MKV, WEBM (audio will be extracted)
 
 ---
 

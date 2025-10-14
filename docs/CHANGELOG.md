@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.2b2] - 2025-10-14
+
+### ✨ Added
+
+**Video Format Support (Phase 1 Complete)**
+- Added support for video file audio extraction: MP4, MOV, AVI, MKV, WEBM
+- Video formats now work seamlessly through existing pydub/FFmpeg integration
+- Updated `PathResolver` and `BatchProcessor` to accept video file extensions
+
+### 📝 Documentation
+
+**Format Support Documentation**
+- Updated README to accurately reflect all supported formats including OPUS
+- Clarified that video files will have audio automatically extracted
+- Documentation now matches actual code capabilities
+
+### 🔧 Technical
+
+**Implementation Details**
+- Video format extensions added to `localtranscribe/core/path_resolver.py:18-23`
+- Video format extensions added to `localtranscribe/batch/processor.py:71-76`
+- No breaking changes - all existing functionality preserved
+- Leverages existing FFmpeg dependency for video audio extraction
+
+**Supported Formats (Total: 13)**
+- Audio (8): MP3, WAV, OGG, M4A, FLAC, AAC, WMA, OPUS
+- Video (5): MP4, MOV, AVI, MKV, WEBM
+
+---
+
 ## [2.0.2b1] - 2025-10-13
 
 ### 📝 Documentation
