@@ -145,7 +145,7 @@ def load_diarization_pipeline(
     try:
         # Load pipeline with progress indicator
         def _load_pipeline():
-            return Pipeline.from_pretrained(model_name, use_auth_token=hf_token)
+            return Pipeline.from_pretrained(model_name, token=hf_token)
 
         pipeline = wrap_model_download(
             _load_pipeline,
@@ -265,7 +265,7 @@ def run_diarization(
         speaker_durations = {}
         speakers = set()
 
-        for turn, _, speaker in diarization_output.itertracks(yield_label=True):
+        for turn, speaker in diarization_output.speaker_diarization:
             speaker_label = speaker
             segments.append({
                 'speaker': speaker_label,

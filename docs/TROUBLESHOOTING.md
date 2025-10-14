@@ -74,9 +74,10 @@ ffmpeg -version
    - Create new token with "read" access
    - Copy to `.env` file
 
-3. Accept model license:
-   - Visit https://huggingface.co/pyannote/speaker-diarization-3.1
-   - Click "Agree and access repository"
+3. Accept model licenses (required for both models):
+   - Main: https://huggingface.co/pyannote/speaker-diarization-3.1
+   - Dependency: https://huggingface.co/pyannote/segmentation-3.0
+   - Click "Agree and access repository" on each page
 
 ### 401 Unauthorized error
 

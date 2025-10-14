@@ -78,7 +78,7 @@ def download_status(description: str, show_spinner: bool = True):
         
     Example:
         with download_status("Downloading diarization model..."):
-            pipeline = Pipeline.from_pretrained(model_name, use_auth_token=token)
+            pipeline = Pipeline.from_pretrained(model_name, token=token)
     """
     if show_spinner:
         with console.status(f"[bold cyan]{description}[/bold cyan]") as status:

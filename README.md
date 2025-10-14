@@ -53,7 +53,9 @@ pip install -e .
 Required for speaker diarization:
 
 1. **Get token** (free): https://huggingface.co/settings/tokens
-2. **Accept license**: https://huggingface.co/pyannote/speaker-diarization-3.1
+2. **Accept model licenses** (required for both models):
+   - Main: https://huggingface.co/pyannote/speaker-diarization-3.1
+   - Dependency: https://huggingface.co/pyannote/segmentation-3.0
 3. **Add to project**:
    ```bash
    echo "HUGGINGFACE_TOKEN=hf_your_token_here" > .env
