@@ -68,7 +68,12 @@ class BatchProcessor:
     """
 
     # Supported audio file extensions
-    AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg", ".m4a", ".flac", ".aac", ".wma", ".opus"}
+    AUDIO_EXTENSIONS = {
+        # Audio formats
+        ".mp3", ".wav", ".ogg", ".m4a", ".flac", ".aac", ".wma", ".opus",
+        # Video formats (audio extraction)
+        ".mp4", ".mov", ".avi", ".mkv", ".webm"
+    }
 
     def __init__(
         self,
