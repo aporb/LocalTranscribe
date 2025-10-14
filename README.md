@@ -11,7 +11,7 @@ Transform recordings into detailed transcripts showing who said what and when—
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
-[Quick Start](#quick-start) • [Installation](#installation) • [Examples](#examples) • [Documentation](#documentation)
+[Quick Start](#quick-start) • [Installation](#installation) • [Examples](#usage-examples) • [Documentation](#documentation)
 
 </div>
 
