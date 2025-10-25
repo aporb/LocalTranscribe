@@ -1,7 +1,7 @@
 """
 Utility functions and classes for LocalTranscribe.
 
-Includes error handling, progress tracking, and common utilities.
+Includes error handling, progress tracking, file browsing, and common utilities.
 """
 
 from .errors import (
@@ -17,6 +17,7 @@ from .errors import (
     DependencyError,
     PipelineError,
 )
+from .file_browser import browse_files, prompt_for_file
 
 __all__ = [
     "LocalTranscribeError",
@@ -30,4 +31,6 @@ __all__ = [
     "ConfigurationError",
     "DependencyError",
     "PipelineError",
+    "browse_files",
+    "prompt_for_file",
 ]
