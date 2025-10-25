@@ -45,6 +45,8 @@ class PipelineStage(Enum):
     DIARIZATION = "diarization"
     TRANSCRIPTION = "transcription"
     COMBINATION = "combination"
+    LABELING = "labeling"
+    PROOFREADING = "proofreading"
 
 
 @dataclass
@@ -88,6 +90,12 @@ class PipelineOrchestrator:
         skip_existing: bool = False,
         create_backup: bool = False,
         verbose: bool = False,
+        # New parameters for Phase 1
+        labels_file: Optional[Path] = None,
+        save_labels: Optional[Path] = None,
+        enable_proofreading: bool = False,
+        proofreading_rules: Optional[Path] = None,
+        proofreading_level: str = "standard",
     ):
         """
         Initialize pipeline orchestrator.
@@ -109,6 +117,11 @@ class PipelineOrchestrator:
             skip_existing: Skip processing if output files already exist
             create_backup: Create backup of existing files before overwriting
             verbose: Enable verbose output
+            labels_file: Path to JSON file with speaker labels
+            save_labels: Path to save speaker label mappings
+            enable_proofreading: Enable automatic proofreading
+            proofreading_rules: Path to custom proofreading rules file
+            proofreading_level: Proofreading level (minimal, standard, thorough)
         """
         self.audio_file = Path(audio_file)
         self.output_dir = Path(output_dir)
@@ -121,6 +134,13 @@ class PipelineOrchestrator:
         self.skip_diarization = skip_diarization
         self.output_formats = output_formats
         self.verbose = verbose
+
+        # New features
+        self.labels_file = Path(labels_file) if labels_file else None
+        self.save_labels = Path(save_labels) if save_labels else None
+        self.enable_proofreading = enable_proofreading
+        self.proofreading_rules = Path(proofreading_rules) if proofreading_rules else None
+        self.proofreading_level = proofreading_level
 
         # Setup console for Rich output
         self.console = Console() if RICH_AVAILABLE else None
@@ -319,6 +339,114 @@ class PipelineOrchestrator:
             self.stage_times[PipelineStage.COMBINATION] = time.time() - stage_start
             raise
 
+    def run_labeling_stage(self, output_file: Path) -> Path:
+        """Run speaker labeling stage to replace speaker IDs with names."""
+        from ..labels import SpeakerLabelManager
+
+        stage_start = time.time()
+
+        self._print("\n[bold]Speaker Labeling[/bold]" if self.console else "\n=== Speaker Labeling ===")
+
+        try:
+            # Initialize label manager
+            manager = SpeakerLabelManager()
+
+            # Load labels from file
+            if self.labels_file and self.labels_file.exists():
+                manager.load_labels(self.labels_file)
+                if self.verbose:
+                    self._print(f"Loaded labels from: {self.labels_file}", style="cyan")
+
+            # Read the output file
+            with open(output_file, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # Detect speakers if saving labels
+            if self.save_labels:
+                speakers = manager.detect_speakers(content)
+                if self.verbose:
+                    self._print(f"Detected {len(speakers)} speakers", style="cyan")
+
+            # Apply labels
+            labeled_content = manager.apply_labels(content)
+
+            # Save labeled version
+            labeled_file = output_file.with_stem(output_file.stem + "_labeled")
+            with open(labeled_file, "w", encoding="utf-8") as f:
+                f.write(labeled_content)
+
+            # Save label mappings if requested
+            if self.save_labels and manager.labels:
+                manager.save_labels(self.save_labels)
+
+            self.stage_times[PipelineStage.LABELING] = time.time() - stage_start
+
+            if self.verbose:
+                self._print(
+                    f"✅ Labeling complete: Applied {len(manager.labels)} speaker labels ({time.time() - stage_start:.1f}s)",
+                    style="green",
+                )
+
+            return labeled_file
+
+        except Exception as e:
+            self.stage_times[PipelineStage.LABELING] = time.time() - stage_start
+            raise
+
+    def run_proofreading_stage(self, input_file: Path) -> Path:
+        """Run proofreading stage to fix common transcription errors."""
+        from ..proofreading import Proofreader, ProofreadingLevel
+
+        stage_start = time.time()
+
+        self._print("\n[bold]Proofreading Transcript[/bold]" if self.console else "\n=== Proofreading ===")
+
+        try:
+            # Initialize proofreader
+            proofreader = Proofreader(
+                level=ProofreadingLevel(self.proofreading_level),
+                track_changes=self.verbose,
+                verbose=self.verbose
+            )
+
+            # Load custom rules if provided
+            if self.proofreading_rules and self.proofreading_rules.exists():
+                proofreader.load_rules_from_file(self.proofreading_rules)
+                if self.verbose:
+                    self._print(f"Loaded custom rules from: {self.proofreading_rules}", style="cyan")
+
+            # Proofread the file
+            result = proofreader.proofread_file(
+                input_path=input_file,
+                output_path=None,  # Will create _proofread version
+                create_backup=False
+            )
+
+            self.stage_times[PipelineStage.PROOFREADING] = time.time() - stage_start
+
+            if result.success and result.has_changes:
+                output_file = input_file.with_stem(input_file.stem + "_proofread")
+                if self.verbose:
+                    self._print(
+                        f"✅ Proofreading complete: {result.total_changes} corrections made ({result.processing_time:.1f}s)",
+                        style="green",
+                    )
+                    # Show summary
+                    self._print(result.get_summary(), style="dim")
+
+                return output_file
+            else:
+                if self.verbose:
+                    self._print("✅ Proofreading complete: No corrections needed", style="green")
+                return input_file
+
+        except Exception as e:
+            self.stage_times[PipelineStage.PROOFREADING] = time.time() - stage_start
+            if self.verbose:
+                self._print(f"⚠️  Proofreading failed: {e}", style="yellow")
+            # Return original file if proofreading fails
+            return input_file
+
     def run(self) -> PipelineResult:
         """
         Execute complete pipeline.
@@ -359,6 +487,25 @@ class PipelineOrchestrator:
                 combination_result = self.run_combination_stage(diarization_result, transcription_result)
                 stages_completed.append("combination")
 
+            # Determine the main output file for labeling/proofreading
+            main_output_file = None
+            if combination_result and combination_result.output_file:
+                main_output_file = combination_result.output_file
+            elif transcription_result.output_files.get("md"):
+                main_output_file = transcription_result.output_files.get("md")
+
+            # Stage 4: Speaker Labeling (optional)
+            if self.labels_file and main_output_file:
+                labeled_file = self.run_labeling_stage(main_output_file)
+                stages_completed.append("labeling")
+                main_output_file = labeled_file  # Update for proofreading
+
+            # Stage 5: Proofreading (optional)
+            final_output_file = main_output_file
+            if self.enable_proofreading and main_output_file:
+                final_output_file = self.run_proofreading_stage(main_output_file)
+                stages_completed.append("proofreading")
+
             # Calculate total time
             total_duration = time.time() - total_start
 
@@ -370,6 +517,10 @@ class PipelineOrchestrator:
                 output_files.update(transcription_result.output_files)
             if combination_result and combination_result.output_file:
                 output_files['combined'] = combination_result.output_file
+
+            # Add final processed file if different from combined
+            if final_output_file and final_output_file != combination_result.output_file if combination_result else None:
+                output_files['final'] = final_output_file
 
             # Print success summary
             self._print("\n" + "=" * 60, style="green")
