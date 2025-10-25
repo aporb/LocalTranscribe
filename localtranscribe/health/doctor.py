@@ -4,6 +4,11 @@ Health check system for LocalTranscribe.
 Validates dependencies, environment, and system configuration.
 """
 
+# Suppress dependency warnings before any imports
+import warnings
+warnings.filterwarnings("ignore", message=".*torchcodec.*")
+warnings.filterwarnings("ignore", module="pyannote.audio.core.io")
+
 import sys
 import os
 import subprocess
@@ -172,17 +177,39 @@ class HealthChecker:
 
     def check_pyannote(self) -> CheckResult:
         """Check pyannote.audio installation."""
-        try:
-            import pyannote.audio
+        # Suppress stderr during import to avoid torchcodec error messages
+        # pyannote.audio attempts to load torchcodec which may generate C extension errors
+        stderr_fd = sys.stderr.fileno()
+        old_stderr_fd = os.dup(stderr_fd)
 
-            version = pyannote.audio.__version__
+        try:
+            # Redirect stderr to /dev/null during import
+            with open(os.devnull, 'w') as devnull:
+                os.dup2(devnull.fileno(), stderr_fd)
+
+                # Attempt import with stderr suppressed
+                try:
+                    import pyannote.audio
+                    has_pyannote = True
+                    version = pyannote.audio.__version__
+                except (ImportError, RuntimeError):
+                    # ImportError: pyannote.audio not installed
+                    # RuntimeError: dependency loading issues (e.g., torchcodec)
+                    has_pyannote = False
+                    version = None
+        finally:
+            # Always restore original stderr
+            os.dup2(old_stderr_fd, stderr_fd)
+            os.close(old_stderr_fd)
+
+        if has_pyannote:
             return CheckResult(
                 name="Pyannote.audio",
                 status="pass",
                 message="Installed",
                 details=[f"Version: {version}"],
             )
-        except ImportError:
+        else:
             return CheckResult(
                 name="Pyannote.audio",
                 status="fail",
@@ -291,6 +318,59 @@ class HealthChecker:
         """Check python-dotenv installation."""
         return self.check_dependency("Python-dotenv", "dotenv")
 
+    def check_torchcodec(self) -> CheckResult:
+        """Check torchcodec installation (optional dependency for pyannote.audio)."""
+        import tempfile
+
+        # Suppress stderr during import to avoid torchcodec error messages
+        # We need to redirect at the file descriptor level because torchcodec
+        # writes to stderr from C extensions
+        stderr_fd = sys.stderr.fileno()
+        old_stderr_fd = os.dup(stderr_fd)
+
+        try:
+            # Redirect stderr to /dev/null
+            with open(os.devnull, 'w') as devnull:
+                os.dup2(devnull.fileno(), stderr_fd)
+
+                # Attempt import with stderr suppressed
+                try:
+                    import torchcodec
+                    has_torchcodec = True
+                except (ImportError, RuntimeError):
+                    # ImportError: torchcodec not installed
+                    # RuntimeError: torchcodec installed but can't load C extensions
+                    has_torchcodec = False
+        finally:
+            # Always restore original stderr
+            os.dup2(old_stderr_fd, stderr_fd)
+            os.close(old_stderr_fd)
+
+        if has_torchcodec:
+            version = getattr(torchcodec, '__version__', 'unknown')
+            return CheckResult(
+                name="TorchCodec",
+                status="pass",
+                message=f"Installed (v{version})",
+                details=[
+                    "TorchCodec is an optional dependency for pyannote.audio",
+                    "LocalTranscribe uses pydub/FFmpeg for audio processing instead",
+                    "Having torchcodec is fine but not required",
+                ],
+            )
+        else:
+            return CheckResult(
+                name="TorchCodec",
+                status="pass",  # Still pass - it's optional!
+                message="Not installed (optional)",
+                details=[
+                    "TorchCodec is an optional dependency for pyannote.audio",
+                    "LocalTranscribe uses pydub/FFmpeg for audio processing - no action needed",
+                    "If you see torchcodec warnings during startup, they can be safely ignored",
+                    "The warnings have been automatically suppressed for cleaner output",
+                ],
+            )
+
     def run_all_checks(self) -> Dict[str, Any]:
         """Run all health checks."""
         self._print("\n[bold]Running health checks...[/bold]\n" if self.console else "\nRunning health checks...\n")
@@ -313,6 +393,7 @@ class HealthChecker:
             ("Typer", self.check_typer),
             ("Rich", self.check_rich),
             ("Python-dotenv", self.check_dotenv),
+            ("TorchCodec", self.check_torchcodec),
         ]
 
         # Run checks

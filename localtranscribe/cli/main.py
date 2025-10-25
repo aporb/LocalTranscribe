@@ -1,6 +1,32 @@
 """Main CLI application entry point."""
 
+# Setup clean warning handling before any imports
+# This must be done early to catch warnings from dependencies
 import sys
+
+# Configure warnings BEFORE any other imports
+if not hasattr(sys, '_localtranscribe_warnings_configured'):
+    # Import and configure warnings handler
+    import warnings
+    import os
+    from pathlib import Path
+
+    # Get the package root to import warnings_handler
+    current_file = Path(__file__)
+    package_root = current_file.parent.parent
+    sys.path.insert(0, str(package_root.parent))
+
+    try:
+        from localtranscribe.utils.warnings_handler import setup_warning_filters
+        setup_warning_filters(silent=False)
+        sys._localtranscribe_warnings_configured = True
+    except ImportError:
+        # Fallback: suppress warnings manually
+        warnings.filterwarnings("ignore", message=".*torchcodec.*")
+        warnings.filterwarnings("ignore", module="pyannote.audio.core.io")
+        sys._localtranscribe_warnings_configured = True
+
+# Now import everything else
 from pathlib import Path
 import typer
 from rich.console import Console
