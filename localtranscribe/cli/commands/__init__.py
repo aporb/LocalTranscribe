@@ -1,5 +1,5 @@
 """CLI commands for LocalTranscribe."""
 
-from . import process, batch, doctor, config, label, version
+from . import process, batch, doctor, config, label, version, wizard
 
-__all__ = ["process", "batch", "doctor", "config", "label", "version"]
+__all__ = ["wizard", "process", "batch", "doctor", "config", "label", "version"]
