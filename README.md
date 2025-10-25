@@ -36,9 +36,14 @@ Transform recordings into detailed transcripts showing who said what and when—
 
 - **🔒 Complete Privacy** - All processing happens locally on your machine
 - **🎯 Speaker Diarization** - Automatic detection of who spoke when
-- **📝 High Accuracy** - Powered by OpenAI's Whisper models
-- **⚡️ Apple Silicon Optimized** - Blazing fast on M1/M2/M3/M4 Macs
-- **🚀 Simple CLI** - One command to transcribe any audio file
+- **🏷️ Speaker Labeling** - Replace speaker IDs with actual names
+- **✨ Auto-Proofreading** - Fix common transcription errors automatically
+- **🧙‍♂️ Guided Wizard** - Dummy-proof setup for beginners
+- **📂 Interactive File Browser** - Navigate folders and select files with arrow keys
+- **🔑 Smart Token Management** - One-time HuggingFace token setup with validation
+- **📝 High Accuracy** - Powered by OpenAI's Whisper models (defaults to medium)
+- **⚡️ Apple Silicon Optimized** - Auto-detects and uses MLX on M1/M2/M3/M4 Macs
+- **🚀 Simple CLI** - Zero commands needed - just run `localtranscribe`
 - **📦 Python SDK** - Integrate transcription into your applications
 - **🔄 Batch Processing** - Process multiple files simultaneously
 - **📊 Multiple Formats** - Output as TXT, JSON, SRT, or Markdown
@@ -57,21 +62,42 @@ pip install localtranscribe
 
 ### Setup HuggingFace Token (One-Time)
 
-Speaker diarization requires a free HuggingFace account:
+Speaker diarization requires a free HuggingFace account. The wizard will guide you through setup:
 
 1. **Create account & get token**: https://huggingface.co/settings/tokens
 2. **Accept model licenses** (click "Agree" on each):
    - https://huggingface.co/pyannote/speaker-diarization-3.1
    - https://huggingface.co/pyannote/segmentation-3.0
-3. **Configure token**:
-   ```bash
-   echo "HUGGINGFACE_TOKEN=hf_your_token_here" > .env
-   ```
+3. **Enter token when prompted** - The wizard will:
+   - Validate your token format
+   - Auto-save to `.env` file
+   - Never ask again after successful setup
+
+**Manual setup (optional):**
+```bash
+echo "HUGGINGFACE_TOKEN=hf_your_token_here" > .env
+```
 
 ### Transcribe Audio
 
+**🎯 The Simplest Way (Recommended for Everyone!):**
+```bash
+# Option 1: Browse for files interactively
+localtranscribe
+
+# Option 2: Provide file path directly
+localtranscribe your-audio.mp3
+```
+Both methods start the **guided wizard** that walks you through all options interactively. The interactive browser lets you navigate folders and select files with arrow keys. Perfect for beginners, fast for everyone!
+
+**⚡️ Direct Mode (For Power Users):**
 ```bash
 localtranscribe process your-audio.mp3
+```
+
+**🎯 Advanced with All Features:**
+```bash
+localtranscribe process your-audio.mp3 --labels speakers.json --proofread
 ```
 
 **Done!** Results appear in `./output/` with speaker labels, timestamps, and full transcript.
@@ -123,6 +149,40 @@ This command checks your system configuration and reports any issues.
 
 ## Usage Examples
 
+### Guided Wizard (Now the Default!)
+
+```bash
+# Option 1: Interactive file browser
+localtranscribe
+
+# Option 2: Provide file path directly
+localtranscribe interview.mp3
+```
+
+The wizard will guide you through:
+- **Interactive file selection** (if no file provided)
+- **HuggingFace token setup** with validation and auto-save
+- **Quality vs speed preferences** (defaults to medium model)
+- **Speaker detection options**
+- **Speaker labeling setup**
+- **Automatic proofreading**
+- **Output location**
+
+**Note:** The wizard runs automatically when you run `localtranscribe` or provide an audio file. Use `localtranscribe process` for direct mode.
+
+### Simple Mode
+
+```bash
+# Smart defaults with minimal prompts
+localtranscribe process meeting.mp3 --simple
+```
+
+Simple mode:
+- Auto-detects speaker labels file if present
+- Prompts for speaker count if unknown
+- Asks about proofreading preferences
+- Shows detailed progress
+
 ### Basic Transcription
 
 ```bash
@@ -138,6 +198,42 @@ localtranscribe process podcast.m4a --model medium
 # Save to custom location
 localtranscribe process audio.mp3 --output ./results/
 ```
+
+### Speaker Labeling
+
+```bash
+# Create a speaker labels file (speakers.json):
+{
+  "SPEAKER_00": "John Smith",
+  "SPEAKER_01": "Jane Doe"
+}
+
+# Apply labels during processing
+localtranscribe process meeting.mp3 --labels speakers.json
+
+# Save speaker IDs for later labeling
+localtranscribe process meeting.mp3 --save-labels speakers.json
+```
+
+### Automatic Proofreading
+
+```bash
+# Enable proofreading with default rules
+localtranscribe process meeting.mp3 --proofread
+
+# Use thorough proofreading
+localtranscribe process meeting.mp3 --proofread --proofread-level thorough
+
+# Custom proofreading rules
+localtranscribe process meeting.mp3 --proofread --proofread-rules my-rules.json
+```
+
+Proofreading fixes:
+- Technical terms (API, JavaScript, Python, etc.)
+- Business terms (CEO, KPI, B2B, etc.)
+- Common homophones (your/you're, their/there)
+- Contractions and grammar
+- Excessive repetitions
 
 ### Batch Processing
 
@@ -239,16 +335,35 @@ Thanks for having me. I'm excited to discuss our new project.
 
 ## Commands
 
+### Default Command (Easiest!)
+```bash
+localtranscribe                        # Interactive file browser + wizard
+localtranscribe audio.mp3              # Automatically runs wizard - perfect for everyone!
+```
+
+### All Commands
+
 | Command | Description | Example |
 |---------|-------------|---------|
-| `process` | Transcribe single audio file | `localtranscribe process audio.mp3` |
+| **DEFAULT** | 🎯 **Interactive file browser (no args) or wizard (with file)** | `localtranscribe` or `localtranscribe audio.mp3` |
+| `wizard` | 🧙‍♂️ Guided interactive setup (explicit) | `localtranscribe wizard audio.mp3` |
+| `process` | Direct transcription without wizard | `localtranscribe process audio.mp3` |
 | `batch` | Process multiple files | `localtranscribe batch ./folder/` |
 | `doctor` | Verify system setup | `localtranscribe doctor` |
 | `label` | Replace speaker IDs with names | `localtranscribe label output.md` |
 | `version` | Show version information | `localtranscribe version` |
 | `config` | Manage configuration | `localtranscribe config show` |
 
+**💡 Pro Tip:** Just run `localtranscribe` to browse and select files interactively, or `localtranscribe audio.mp3` to transcribe directly!
+
 Run `localtranscribe --help` or `localtranscribe <command> --help` for detailed options.
+
+**New in v3.0.0:**
+- ✨ **Wizard is now the default** - just provide your audio file!
+- `--simple` mode for process command
+- `--labels` and `--proofread` flags
+- Automatic speaker labeling
+- Intelligent proofreading with 100+ rules
 
 ---
 
@@ -259,16 +374,19 @@ Choose the right Whisper model for your needs:
 | Model | Speed | Quality | RAM | Use Case |
 |-------|-------|---------|-----|----------|
 | **tiny** | Fastest | Basic | 1GB | Quick drafts, testing |
-| **base** | Fast | Good | 1GB | **Most use cases** |
-| **small** | Moderate | Better | 2GB | Professional work |
-| **medium** | Slow | Excellent | 5GB | Publication quality |
-| **large** | Very slow | Best | 10GB | Maximum accuracy |
+| **base** | Fast | Good | 1GB | Quick transcription |
+| **small** | Moderate | Better | 2GB | Longer recordings |
+| **medium** | Moderate | Excellent | 5GB | **Default - Best balance** |
+| **large** | Slow | Best | 10GB | Maximum accuracy |
 
-**Performance on M2 Mac (10-minute audio):**
+**Performance on M2 Mac with MLX (10-minute audio):**
 - `tiny`: ~30 seconds
-- `base`: ~2 minutes  ← **Recommended starting point**
+- `base`: ~2 minutes
 - `small`: ~5 minutes
-- `medium`: ~10 minutes
+- `medium`: ~7 minutes  ← **Default starting point**
+- `large`: ~15 minutes
+
+**Note:** LocalTranscribe automatically uses MLX-Whisper on Apple Silicon Macs for optimal performance.
 
 ---
 
@@ -376,7 +494,22 @@ This command diagnoses common setup issues and suggests fixes.
 
 ## What's New
 
-### v2.0.2b1 (Current)
+### v3.0.0 (Current) - Major UX Overhaul 🎉
+- ✨ **NEW: Interactive File Browser** - Navigate folders and select files with arrow keys (just run `localtranscribe`)
+- ✨ **NEW: Smart Token Management** - Inline HuggingFace token entry with validation and auto-save
+- ✨ **NEW: Guided Wizard** - Dummy-proof interactive setup for beginners (now the default!)
+- ✨ **NEW: Auto-Proofreading** - Fix 100+ common transcription errors automatically
+- ✨ **NEW: Speaker Labeling** - Integrated speaker name replacement in process command
+- ✨ **NEW: Simple Mode** - `--simple` flag for smart defaults and guided prompts
+- 🔧 **Default Model:** Changed to `medium` for better quality out-of-box
+- 🔧 Enhanced pipeline with labeling and proofreading stages
+- 🚀 **Auto MLX Detection** - Automatically uses MLX-Whisper on Apple Silicon
+- 📝 Comprehensive proofreading rules for tech, business, and general content
+- 🎯 Auto-detect speaker labels file in working directory
+- 💾 Save speaker mappings for reuse with `--save-labels`
+- 📚 Complete documentation overhaul with new examples
+
+### v2.0.2b1
 - ✅ Updated package description and metadata
 - ✅ Enhanced README with PyPI link
 - ✅ Professional documentation polish
