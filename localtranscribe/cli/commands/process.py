@@ -55,7 +55,7 @@ def process(
         help="Output directory for results (default: ./output)",
     ),
     model_size: ModelSize = typer.Option(
-        ModelSize.base,
+        ModelSize.medium,
         "--model",
         "-m",
         help="Whisper model size (larger = more accurate but slower)",
@@ -117,6 +117,41 @@ def process(
         "-v",
         help="Enable verbose output",
     ),
+    # New options for labeling and proofreading
+    labels: Optional[Path] = typer.Option(
+        None,
+        "--labels",
+        "-L",
+        help="JSON file with speaker labels (SPEAKER_00: Name)",
+        exists=True,
+    ),
+    save_labels: Optional[Path] = typer.Option(
+        None,
+        "--save-labels",
+        help="Save detected speaker IDs to JSON file",
+    ),
+    proofread: bool = typer.Option(
+        False,
+        "--proofread",
+        "-p",
+        help="Enable automatic proofreading of transcript",
+    ),
+    proofread_rules: Optional[Path] = typer.Option(
+        None,
+        "--proofread-rules",
+        help="Custom proofreading rules file (JSON/YAML)",
+        exists=True,
+    ),
+    proofread_level: str = typer.Option(
+        "standard",
+        "--proofread-level",
+        help="Proofreading level: minimal, standard, or thorough",
+    ),
+    simple: bool = typer.Option(
+        False,
+        "--simple",
+        help="Simple mode with smart defaults and interactive prompts",
+    ),
 ):
     """
     🎙️ Process audio file with speaker diarization and transcription.
@@ -125,11 +160,25 @@ def process(
     1. Speaker diarization (identifies who spoke when)
     2. Speech-to-text transcription (converts speech to text)
     3. Combination (creates speaker-labeled transcript)
+    4. Speaker labeling (optional - replace IDs with names)
+    5. Proofreading (optional - fix common transcription errors)
 
-    Example:
+    Examples:
+        # Simple mode - interactive and beginner-friendly
+        localtranscribe process audio.mp3 --simple
+
+        # Basic usage
         localtranscribe process audio.mp3
-        localtranscribe process audio.mp3 -o results/ -m small -s 2
-        localtranscribe process audio.mp3 --skip-diarization
+
+        # With speaker labels and proofreading
+        localtranscribe process audio.mp3 --labels speakers.json --proofread
+
+        # Advanced usage
+        localtranscribe process audio.mp3 -o results/ -m medium -s 2 \\
+            --labels speakers.json --proofread --proofread-level thorough
+
+        # Skip diarization (single speaker)
+        localtranscribe process lecture.mp3 --skip-diarization
     """
     try:
         # Set defaults
@@ -138,6 +187,44 @@ def process(
 
         if formats is None:
             formats = ["txt", "json", "md"]
+
+        # Simple mode: Interactive setup with smart defaults
+        if simple:
+            console.print()
+            console.print(
+                Panel.fit(
+                    "🎙️ [bold cyan]LocalTranscribe - Simple Mode[/bold cyan]\n"
+                    "Easy setup with smart defaults",
+                    border_style="cyan",
+                )
+            )
+            console.print()
+
+            # Use base model by default (good balance)
+            if model_size == ModelSize.base:
+                console.print("[dim]Using 'base' model (good balance of speed and quality)[/dim]")
+
+            # Ask if they know number of speakers
+            if num_speakers is None:
+                if typer.confirm("Do you know the exact number of speakers?", default=False):
+                    num_speakers = typer.prompt("How many speakers?", type=int)
+
+            # Auto-detect labels file if present
+            if labels is None:
+                auto_labels = audio_file.parent / "speaker_labels.json"
+                if auto_labels.exists():
+                    console.print(f"[cyan]✓ Found speaker labels: {auto_labels}[/cyan]")
+                    if typer.confirm("Use these speaker labels?", default=True):
+                        labels = auto_labels
+
+            # Enable proofreading by default in simple mode
+            if not proofread:
+                proofread = typer.confirm("Enable automatic proofreading?", default=True)
+
+            # Enable verbose in simple mode for better feedback
+            verbose = True
+
+            console.print()
 
         # Print header
         console.print()
@@ -166,6 +253,14 @@ def process(
                 config_table.add_row("Number of Speakers", str(num_speakers))
             if language:
                 config_table.add_row("Language", language)
+            if labels:
+                config_table.add_row("Speaker Labels", str(labels))
+            if save_labels:
+                config_table.add_row("Save Labels To", str(save_labels))
+            if proofread:
+                config_table.add_row("Proofreading", f"Enabled ({proofread_level})")
+                if proofread_rules:
+                    config_table.add_row("Custom Rules", str(proofread_rules))
 
             console.print(config_table)
             console.print()
@@ -184,6 +279,12 @@ def process(
             output_formats=formats,
             hf_token=hf_token,
             verbose=verbose,
+            # New parameters
+            labels_file=labels,
+            save_labels=save_labels,
+            enable_proofreading=proofread,
+            proofreading_rules=proofread_rules,
+            proofreading_level=proofread_level,
         )
 
         # Run pipeline
