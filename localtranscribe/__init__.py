@@ -20,7 +20,7 @@ Advanced Usage:
 from .utils.warnings_handler import setup_warning_filters
 setup_warning_filters(silent=False)
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __author__ = "LocalTranscribe Contributors"
 __license__ = "MIT"
 

@@ -18,6 +18,12 @@ from ..utils.download import loading_spinner, show_first_run_message, check_mode
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
+try:
+    from tqdm import tqdm
+    TQDM_AVAILABLE = True
+except ImportError:
+    TQDM_AVAILABLE = False
+
 
 @dataclass
 class TranscriptionSegment:
@@ -154,6 +160,39 @@ def preprocess_audio(input_file: Path, output_dir: Path) -> Path:
         )
 
 
+def _get_audio_duration(audio_file: Path) -> float:
+    """
+    Get the duration of an audio file in seconds.
+
+    Args:
+        audio_file: Path to audio file
+
+    Returns:
+        Duration in seconds
+
+    Raises:
+        Exception: If unable to determine duration
+    """
+    ext = audio_file.suffix.lower()
+
+    # Load audio based on format
+    if ext == '.ogg':
+        audio = AudioSegment.from_ogg(str(audio_file))
+    elif ext == '.mp3':
+        audio = AudioSegment.from_mp3(str(audio_file))
+    elif ext == '.m4a':
+        audio = AudioSegment.from_file(str(audio_file), format='m4a')
+    elif ext == '.wav':
+        audio = AudioSegment.from_wav(str(audio_file))
+    elif ext == '.flac':
+        audio = AudioSegment.from_file(str(audio_file), format='flac')
+    else:
+        audio = AudioSegment.from_file(str(audio_file))
+
+    # Duration in seconds
+    return len(audio) / 1000.0
+
+
 def transcribe_with_mlx(
     audio_file: Path, model_size: str = "base", language: Optional[str] = None
 ) -> Tuple[str, List[Dict[str, Any]], str, float]:
@@ -186,7 +225,32 @@ def transcribe_with_mlx(
         f"Loading MLX-Whisper {model_size} model...",
         f"MLX-Whisper loaded"
     ):
-        result = mlx_whisper.transcribe(str(audio_file), path_or_hf_repo=model_repo, language=language)
+        pass  # Model loading happens in transcribe call
+
+    # Get audio duration for progress estimation
+    try:
+        audio_duration = _get_audio_duration(audio_file)
+    except:
+        audio_duration = None
+
+    # Transcribe with progress tracking
+    print(f"⏳ Transcribing audio{f' ({audio_duration:.1f}s)' if audio_duration else ''}...")
+
+    if audio_duration:
+        # Show estimated progress based on benchmarks
+        # MLX-Whisper benchmarks: ~0.12x realtime for large model on M-series
+        model_speeds = {
+            "tiny": 0.02,    # 2% of audio duration
+            "base": 0.04,    # 4% of audio duration
+            "small": 0.06,   # 6% of audio duration
+            "medium": 0.08,  # 8% of audio duration
+            "large": 0.12,   # 12% of audio duration
+        }
+        estimated_time = audio_duration * model_speeds.get(model_size, 0.1)
+        print(f"⏱️  Estimated time: {estimated_time:.1f}s (this may vary)")
+
+    result = mlx_whisper.transcribe(str(audio_file), path_or_hf_repo=model_repo, language=language)
+    print("✓ Transcription complete")
 
     # Extract data
     text = result.get("text", "")
@@ -241,22 +305,66 @@ def transcribe_with_faster_whisper(
     # Run transcription
     segments_iter, info = model.transcribe(str(audio_file), beam_size=5, language=language)
 
-    # Collect segments
+    # Collect segments with progress bar
     segments = []
     full_text = ""
 
-    for segment in segments_iter:
-        segments.append({
-            'id': len(segments),
-            'start': segment.start,
-            'end': segment.end,
-            'text': segment.text,
-            'temperature': 0,
-            'avg_logprob': 0,
-            'compression_ratio': 0,
-            'no_speech_prob': 0,
-        })
-        full_text += segment.text + " "
+    # Get audio duration for progress bar
+    audio_duration = getattr(info, 'duration', 0)
+
+    if audio_duration > 0 and TQDM_AVAILABLE:
+        # Show progress bar based on segment timestamps
+        print(f"⏳ Transcribing {audio_duration:.1f}s of audio...")
+
+        timestamp = 0.0
+        with tqdm(total=audio_duration, unit="s", desc="Transcription",
+                  bar_format="{l_bar}{bar}| {n:.1f}/{total:.1f}s [{elapsed}<{remaining}]") as pbar:
+            for segment in segments_iter:
+                segments.append({
+                    'id': len(segments),
+                    'start': segment.start,
+                    'end': segment.end,
+                    'text': segment.text,
+                    'temperature': 0,
+                    'avg_logprob': 0,
+                    'compression_ratio': 0,
+                    'no_speech_prob': 0,
+                })
+                full_text += segment.text + " "
+
+                # Update progress bar
+                progress_delta = segment.end - timestamp
+                pbar.update(progress_delta)
+                timestamp = segment.end
+
+        print("✓ Transcription complete")
+    else:
+        # Fallback without progress bar if duration unavailable or tqdm not installed
+        if audio_duration > 0:
+            print(f"⏳ Transcribing {audio_duration:.1f}s of audio...")
+        else:
+            print("⏳ Transcribing audio...")
+
+        segment_count = 0
+        for segment in segments_iter:
+            segments.append({
+                'id': len(segments),
+                'start': segment.start,
+                'end': segment.end,
+                'text': segment.text,
+                'temperature': 0,
+                'avg_logprob': 0,
+                'compression_ratio': 0,
+                'no_speech_prob': 0,
+            })
+            full_text += segment.text + " "
+
+            # Show periodic updates
+            segment_count += 1
+            if segment_count % 10 == 0:
+                print(f"  ... processed {segment_count} segments (at {segment.end:.1f}s)")
+
+        print("✓ Transcription complete")
 
     language_detected = getattr(info, 'language', language or 'unknown')
     duration = max([s['end'] for s in segments]) if segments else 0

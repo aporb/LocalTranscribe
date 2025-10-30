@@ -46,65 +46,198 @@ class CombinationResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class SpeakerRegion:
+    """Represents a contiguous region dominated by one speaker.
+
+    Speaker regions group consecutive diarization segments into coherent
+    time periods where one speaker is dominant. This reduces the impact
+    of micro-segments and provides better context for speaker mapping.
+    """
+
+    speaker: str
+    start: float
+    end: float
+    duration: float
+    confidence: float
+    segment_count: int  # Number of diarization segments in this region
+
+
+def create_speaker_regions(
+    diarization_segments: List[Dict[str, Any]], max_gap: float = 1.0
+) -> List[SpeakerRegion]:
+    """Create speaker regions from diarization segments.
+
+    Groups consecutive same-speaker segments into regions, bridging small gaps.
+    This helps reduce the impact of over-segmentation and micro-segments.
+
+    Args:
+        diarization_segments: List of diarization segments
+        max_gap: Maximum gap (seconds) to bridge between same-speaker segments
+
+    Returns:
+        List of speaker regions
+    """
+    if not diarization_segments:
+        return []
+
+    regions = []
+    current_region = {
+        'speaker': diarization_segments[0]['speaker'],
+        'start': diarization_segments[0]['start'],
+        'end': diarization_segments[0]['end'],
+        'confidence': 1.0,  # Default confidence
+        'segment_count': 1,
+    }
+
+    for seg in diarization_segments[1:]:
+        gap = seg['start'] - current_region['end']
+
+        # If same speaker and within gap threshold, extend region
+        if seg['speaker'] == current_region['speaker'] and gap <= max_gap:
+            current_region['end'] = seg['end']
+            current_region['segment_count'] += 1
+        else:
+            # Save current region and start new one
+            duration = current_region['end'] - current_region['start']
+            regions.append(
+                SpeakerRegion(
+                    speaker=current_region['speaker'],
+                    start=current_region['start'],
+                    end=current_region['end'],
+                    duration=duration,
+                    confidence=current_region['confidence'],
+                    segment_count=current_region['segment_count'],
+                )
+            )
+
+            # Start new region
+            current_region = {
+                'speaker': seg['speaker'],
+                'start': seg['start'],
+                'end': seg['end'],
+                'confidence': 1.0,
+                'segment_count': 1,
+            }
+
+    # Don't forget the last region
+    duration = current_region['end'] - current_region['start']
+    regions.append(
+        SpeakerRegion(
+            speaker=current_region['speaker'],
+            start=current_region['start'],
+            end=current_region['end'],
+            duration=duration,
+            confidence=current_region['confidence'],
+            segment_count=current_region['segment_count'],
+        )
+    )
+
+    return regions
+
+
 def map_speakers_to_segments(
-    diarization_segments: List[Dict[str, Any]], transcription_segments: List[TranscriptionSegment]
+    diarization_segments: List[Dict[str, Any]],
+    transcription_segments: List[TranscriptionSegment],
+    use_regions: bool = True,
+    temporal_consistency_weight: float = 0.3,
+    duration_weight: float = 0.4,
+    overlap_weight: float = 0.3,
 ) -> List[EnhancedSegment]:
     """
-    Map speakers to transcription segments based on time overlap.
+    Map speakers to transcription segments using context-aware scoring.
 
-    Uses confidence scoring based on overlap percentage and transcription quality.
+    Enhanced algorithm that uses speaker regions and temporal consistency
+    to improve speaker assignment accuracy.
 
     Args:
         diarization_segments: List of diarization segments with speaker labels
         transcription_segments: List of transcription segments
+        use_regions: Whether to use speaker regions (recommended)
+        temporal_consistency_weight: Weight for temporal consistency score
+        duration_weight: Weight for region duration score
+        overlap_weight: Weight for overlap score
 
     Returns:
         List of enhanced segments with speaker labels and confidence scores
     """
+    # Create speaker regions for better context
+    if use_regions:
+        regions = create_speaker_regions(diarization_segments, max_gap=1.0)
+    else:
+        # Convert segments to regions without grouping
+        regions = [
+            SpeakerRegion(
+                speaker=seg['speaker'],
+                start=seg['start'],
+                end=seg['end'],
+                duration=seg['duration'],
+                confidence=1.0,
+                segment_count=1,
+            )
+            for seg in diarization_segments
+        ]
+
     enhanced_segments = []
+    previous_speaker = None
 
     for trans_seg in transcription_segments:
         trans_start = trans_seg.start
         trans_end = trans_seg.end
         trans_duration = trans_end - trans_start
 
-        # Find speaker with most overlap
-        best_overlap = 0
+        # Find best speaker using context-aware scoring
+        best_score = -1
         best_speaker = 'UNKNOWN'
         best_confidence = 0.0
 
-        for dia_seg in diarization_segments:
-            dia_start = dia_seg['start']
-            dia_end = dia_seg['end']
-
+        for region in regions:
             # Calculate overlap
-            overlap_start = max(trans_start, dia_start)
-            overlap_end = min(trans_end, dia_end)
+            overlap_start = max(trans_start, region.start)
+            overlap_end = min(trans_end, region.end)
             overlap_duration = max(0, overlap_end - overlap_start)
 
-            if overlap_duration > best_overlap:
-                best_overlap = overlap_duration
-                best_speaker = dia_seg['speaker']
-                best_confidence = overlap_duration / trans_duration if trans_duration > 0 else 0.0
+            if overlap_duration == 0:
+                continue  # No overlap, skip
 
-        # If no overlap, use nearest speaker with low confidence
-        if best_overlap == 0:
+            # 1. Overlap score (how much of trans_seg overlaps with region)
+            overlap_score = overlap_duration / trans_duration if trans_duration > 0 else 0.0
+
+            # 2. Duration score (longer regions = more confident)
+            # Normalize to ~5 seconds
+            duration_score = min(1.0, region.duration / 5.0)
+
+            # 3. Temporal consistency score (prefer same speaker as previous)
+            if previous_speaker == region.speaker:
+                consistency_score = 0.8
+            else:
+                consistency_score = 0.2
+
+            # Weighted combination
+            final_score = (
+                overlap_score * overlap_weight + duration_score * duration_weight + consistency_score * temporal_consistency_weight
+            ) * region.confidence
+
+            if final_score > best_score:
+                best_score = final_score
+                best_speaker = region.speaker
+                best_confidence = overlap_score  # Use overlap as confidence
+
+        # If no overlap found, fall back to nearest speaker
+        if best_score < 0:
             min_distance = float('inf')
-            for dia_seg in diarization_segments:
-                dia_start = dia_seg['start']
-                dia_end = dia_seg['end']
-
+            for region in regions:
                 # Calculate distance to nearest boundary
                 distance = min(
-                    abs(trans_start - dia_end),
-                    abs(trans_end - dia_start),
-                    abs(trans_start - dia_start),
-                    abs(trans_end - dia_end),
+                    abs(trans_start - region.end),
+                    abs(trans_end - region.start),
+                    abs(trans_start - region.start),
+                    abs(trans_end - region.end),
                 )
 
                 if distance < min_distance:
                     min_distance = distance
-                    best_speaker = dia_seg['speaker']
+                    best_speaker = region.speaker
                     best_confidence = 0.1  # Low confidence for distance-based
 
         # Calculate transcription quality metrics
@@ -118,29 +251,76 @@ def map_speakers_to_segments(
         # Combined confidence
         combined_confidence = best_confidence * transcription_quality
 
-        enhanced_segments.append(
-            EnhancedSegment(
-                start=trans_start,
-                end=trans_end,
-                text=trans_seg.text,
-                speaker=best_speaker,
-                speaker_confidence=best_confidence,
-                transcription_quality=transcription_quality,
-                combined_confidence=combined_confidence,
-                avg_logprob=avg_logprob,
-                no_speech_prob=no_speech_prob,
-                compression_ratio=compression_ratio,
-            )
+        enhanced_segment = EnhancedSegment(
+            start=trans_start,
+            end=trans_end,
+            text=trans_seg.text,
+            speaker=best_speaker,
+            speaker_confidence=best_confidence,
+            transcription_quality=transcription_quality,
+            combined_confidence=combined_confidence,
+            avg_logprob=avg_logprob,
+            no_speech_prob=no_speech_prob,
+            compression_ratio=compression_ratio,
         )
 
+        enhanced_segments.append(enhanced_segment)
+        previous_speaker = best_speaker  # Track for temporal consistency
+
     return enhanced_segments
+
+
+def _split_into_paragraphs(text: str, max_length: int = 500) -> List[str]:
+    """Split long text into paragraphs at sentence boundaries.
+
+    Args:
+        text: Text to split
+        max_length: Maximum characters per paragraph
+
+    Returns:
+        List of paragraph strings
+    """
+    if len(text) <= max_length:
+        return [text]
+
+    # Split into sentences (basic split on . ! ?)
+    import re
+
+    sentences = re.split(r'([.!?]+\s+)', text)
+
+    paragraphs = []
+    current_para = ""
+
+    for i in range(0, len(sentences), 2):
+        sentence = sentences[i]
+        # Add punctuation back if it exists
+        if i + 1 < len(sentences):
+            sentence += sentences[i + 1]
+
+        # If adding this sentence would exceed max_length, start new paragraph
+        if current_para and len(current_para) + len(sentence) > max_length:
+            paragraphs.append(current_para.strip())
+            current_para = sentence
+        else:
+            current_para += sentence
+
+    # Add last paragraph if not empty
+    if current_para.strip():
+        paragraphs.append(current_para.strip())
+
+    return paragraphs if paragraphs else [text]
 
 
 def create_combined_transcript(
     enhanced_segments: List[EnhancedSegment], audio_file: Path, include_confidence: bool = True
 ) -> str:
     """
-    Create formatted transcript with speaker labels.
+    Create formatted transcript with speaker labels and improved readability.
+
+    Enhanced with:
+    - Paragraph breaks within long speaker turns
+    - Better timestamp granularity for long turns
+    - Confidence indicators
 
     Args:
         enhanced_segments: List of segments with speaker labels
@@ -166,13 +346,7 @@ def create_combined_transcript(
         if seg.speaker != current_speaker:
             # Process previous group
             if current_segments:
-                combined_text = " ".join([s.text.strip() for s in current_segments])
-                first_start = f"{current_segments[0].start:.3f}s"
-                last_end = f"{current_segments[-1].end:.3f}s"
-
-                lines.append(f"### {current_speaker}\n")
-                lines.append(f"**Time:** [{first_start} - {last_end}]\n")
-                lines.append(f"\n{combined_text}\n")
+                _format_speaker_turn(lines, current_speaker, current_segments, include_confidence)
 
             current_speaker = seg.speaker
             current_segments = [seg]
@@ -181,13 +355,7 @@ def create_combined_transcript(
 
     # Process last group
     if current_segments:
-        combined_text = " ".join([s.text.strip() for s in current_segments])
-        first_start = f"{current_segments[0].start:.3f}s"
-        last_end = f"{current_segments[-1].end:.3f}s"
-
-        lines.append(f"### {current_speaker}\n")
-        lines.append(f"**Time:** [{first_start} - {last_end}]\n")
-        lines.append(f"\n{combined_text}\n")
+        _format_speaker_turn(lines, current_speaker, current_segments, include_confidence)
 
     # Detailed breakdown
     lines.append(f"\n## Detailed Breakdown by Segments\n")
@@ -196,7 +364,8 @@ def create_combined_transcript(
         line = f"**[{seg.speaker}] [{seg.start:.3f}s - {seg.end:.3f}s]** {seg.text.strip()}\n"
         if include_confidence:
             confidence_pct = seg.combined_confidence * 100
-            line += f"**Confidence:** {confidence_pct:.1f}% | Quality: {seg.transcription_quality:.2f}\n"
+            confidence_indicator = "✓" if confidence_pct >= 70 else "⚠" if confidence_pct >= 50 else "✗"
+            line += f"  *{confidence_indicator} Confidence: {confidence_pct:.1f}% | Quality: {seg.transcription_quality:.2f}*\n"
         lines.append(line)
 
     # Speaking time distribution
@@ -244,6 +413,42 @@ def create_combined_transcript(
     lines.append(f"- **Speakers:** {', '.join(sorted(speakers))}\n")
 
     return "\n".join(lines)
+
+
+def _format_speaker_turn(
+    lines: List[str], speaker: str, segments: List[EnhancedSegment], include_confidence: bool
+) -> None:
+    """Format a speaker turn with paragraph breaks for long text.
+
+    Args:
+        lines: List to append formatted lines to
+        speaker: Speaker ID
+        segments: Segments for this speaker turn
+        include_confidence: Whether to show confidence indicators
+    """
+    combined_text = " ".join([s.text.strip() for s in segments])
+    first_start = segments[0].start
+    last_end = segments[-1].end
+    turn_duration = last_end - first_start
+
+    # Calculate average confidence for this turn
+    avg_confidence = sum(s.combined_confidence for s in segments) / len(segments) if segments else 0.0
+
+    lines.append(f"### {speaker}\n")
+    lines.append(f"**Time:** [{first_start:.3f}s - {last_end:.3f}s] ({turn_duration:.1f}s)\n")
+
+    if include_confidence:
+        confidence_pct = avg_confidence * 100
+        confidence_indicator = "✓" if confidence_pct >= 70 else "⚠" if confidence_pct >= 50 else "✗"
+        lines.append(f"*{confidence_indicator} Avg confidence: {confidence_pct:.1f}%*\n")
+
+    # Split long text into paragraphs
+    paragraphs = _split_into_paragraphs(combined_text, max_length=500)
+
+    for para in paragraphs:
+        lines.append(f"\n{para}\n")
+
+    lines.append("\n")  # Add spacing between speaker turns
 
 
 def combine_results(
