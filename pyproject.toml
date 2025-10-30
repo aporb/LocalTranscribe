@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localtranscribe"
-version = "3.0.0"
+version = "3.1.0"
 description = "Privacy-first audio transcription with speaker diarization, labeling, and proofreading. Entirely offline."
 authors = [{name = "LocalTranscribe Contributors"}]
 readme = "README.md"
@@ -98,6 +98,8 @@ packages = [
     "localtranscribe.formats",
     "localtranscribe.labels",
     "localtranscribe.proofreading",
+    "localtranscribe.audio",  # Phase 2
+    "localtranscribe.quality",  # Phase 2
 ]
 
 [tool.setuptools.package-data]
