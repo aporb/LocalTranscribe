@@ -8,8 +8,8 @@ Guide for setting up and managing LocalTranscribe's GitHub integration, version 
 
 **Repository:** https://github.com/aporb/LocalTranscribe
 **Package:** https://pypi.org/project/localtranscribe/
-**Version:** 3.0.0 (synchronized across all sources)
-**Package Version:** 3.0.0 (as of `localtranscribe/__init__.py`)
+**Version:** 3.1.0 (synchronized across all sources)
+**Package Version:** 3.1.0 (as of `localtranscribe/__init__.py`)
 
 **Note:** Version is now synchronized across pyproject.toml, __init__.py, and documentation.
 
@@ -133,10 +133,10 @@ GitHub displays package information through:
 
 ## Version Status
 
-**Current Version: 3.0.0**
-- `pyproject.toml`: 3.0.0
-- `localtranscribe/__init__.py`: 3.0.0
-- `docs/CHANGELOG.md`: 3.0.0 entry added
+**Current Version: 3.1.0**
+- `pyproject.toml`: 3.1.0
+- `localtranscribe/__init__.py`: 3.1.0
+- `docs/CHANGELOG.md`: 3.1.0 entry added
 
 **✅ All versions are synchronized!**
 
