@@ -91,7 +91,12 @@ class Proofreader:
         level: ProofreadingLevel = ProofreadingLevel.STANDARD,
         track_changes: bool = True,
         preserve_timestamps: bool = True,
-        verbose: bool = False
+        verbose: bool = False,
+        # Phase 2 enhancements
+        enable_domain_dictionaries: bool = False,
+        domains: Optional[List[str]] = None,
+        enable_acronym_expansion: bool = False,
+        acronym_format: str = "parenthetical"
     ):
         """
         Initialize proofreader.
@@ -102,11 +107,21 @@ class Proofreader:
             track_changes: Whether to track individual changes
             preserve_timestamps: Preserve timestamp formatting in transcripts
             verbose: Enable verbose logging
+            enable_domain_dictionaries: Enable domain-specific term corrections (Phase 2)
+            domains: List of domains to enable (e.g., ["technical", "business"])
+            enable_acronym_expansion: Enable acronym expansion (Phase 2)
+            acronym_format: Format for acronym expansion (parenthetical, replacement)
         """
         self.level = level
         self.track_changes = track_changes
         self.preserve_timestamps = preserve_timestamps
         self.verbose = verbose
+
+        # Phase 2 enhancements
+        self.enable_domain_dictionaries = enable_domain_dictionaries
+        self.domains = domains or ["common"]
+        self.enable_acronym_expansion = enable_acronym_expansion
+        self.acronym_format = acronym_format
 
         # Load appropriate rules based on level
         if rules:
@@ -117,6 +132,19 @@ class Proofreader:
 
         # Compile regex patterns for efficiency
         self._compile_patterns()
+
+        # Initialize domain dictionaries if enabled
+        self.domain_patterns = {}
+        if self.enable_domain_dictionaries:
+            self._load_domain_dictionaries()
+
+        # Initialize acronym expander if enabled
+        self.acronym_expander = None
+        if self.enable_acronym_expansion:
+            from .acronym_expander import AcronymExpander
+            self.acronym_expander = AcronymExpander(
+                first_occurrence_only=True
+            )
 
     def _load_rules_for_level(self, level: ProofreadingLevel) -> Dict[str, Any]:
         """Load rules based on proofreading level."""
@@ -160,6 +188,33 @@ class Proofreader:
             except re.error as e:
                 if self.verbose:
                     print(f"Warning: Invalid regex pattern '{pattern}': {e}")
+
+    def _load_domain_dictionaries(self) -> None:
+        """Load and compile domain-specific dictionaries."""
+        from .domain_dictionaries import get_domain_dictionary
+
+        self.domain_patterns = {}
+
+        for domain in self.domains:
+            domain_dict = get_domain_dictionary(domain)
+            compiled_patterns = []
+
+            for pattern, replacement in domain_dict.items():
+                try:
+                    compiled = re.compile(pattern, re.IGNORECASE)
+                    compiled_patterns.append({
+                        "pattern": compiled,
+                        "replacement": replacement,
+                        "description": f"Domain correction: {domain}"
+                    })
+                except re.error as e:
+                    if self.verbose:
+                        print(f"Warning: Invalid domain pattern '{pattern}': {e}")
+
+            self.domain_patterns[domain] = compiled_patterns
+
+            if self.verbose:
+                print(f"Loaded {len(compiled_patterns)} patterns for domain: {domain}")
 
     def load_rules_from_file(self, path: Path) -> None:
         """
@@ -215,12 +270,44 @@ class Proofreader:
         )
 
         try:
+            corrected = text
+            changes = []
+
+            # Phase 2: Apply domain-specific dictionaries first
+            if self.enable_domain_dictionaries and self.domain_patterns:
+                if self.verbose:
+                    print("Applying domain-specific corrections...")
+
+                for domain, patterns in self.domain_patterns.items():
+                    for rule in patterns:
+                        pattern = rule["pattern"]
+                        replacement = rule["replacement"]
+                        description = rule["description"]
+
+                        # Track changes if enabled
+                        if self.track_changes:
+                            matches = list(pattern.finditer(corrected))
+                            for match in reversed(matches):
+                                original_text = match.group(0)
+                                new_text = pattern.sub(replacement, original_text)
+
+                                if original_text != new_text:
+                                    changes.append(ProofreadingChange(
+                                        original=original_text,
+                                        replacement=new_text,
+                                        position=match.start(),
+                                        rule_description=description
+                                    ))
+
+                        # Apply the replacement
+                        new_corrected = pattern.sub(replacement, corrected)
+                        if new_corrected != corrected:
+                            result.rules_applied += 1
+                            corrected = new_corrected
+
             # Apply main replacement rules
             if self.verbose:
                 print("Applying replacement rules...")
-
-            corrected = text
-            changes = []
 
             # Apply compiled rules
             for rule in self.compiled_rules:
@@ -299,6 +386,27 @@ class Proofreader:
                     pattern = re.compile(custom.get("pattern", ""), re.IGNORECASE)
                     replacement = custom.get("replacement", "")
                     corrected = pattern.sub(replacement, corrected)
+
+            # Phase 2: Apply acronym expansion (last step)
+            if self.enable_acronym_expansion and self.acronym_expander:
+                if self.verbose:
+                    print("Expanding acronyms...")
+
+                expanded = self.acronym_expander.expand_text(
+                    corrected,
+                    format_style=self.acronym_format
+                )
+
+                if expanded != corrected:
+                    result.rules_applied += 1
+                    if self.track_changes:
+                        changes.append(ProofreadingChange(
+                            original="[acronyms]",
+                            replacement="[expanded]",
+                            position=-1,
+                            rule_description="Acronym expansion"
+                        ))
+                    corrected = expanded
 
             # Update result
             result.corrected_text = corrected

@@ -1,7 +1,8 @@
 """
 Proofreading module for LocalTranscribe.
 
-Provides automatic correction of common transcription errors.
+Provides automatic correction of common transcription errors with
+domain-specific dictionaries, acronym expansion, and NER support.
 """
 
 from .proofreader import (
@@ -23,6 +24,15 @@ from .defaults import (
     get_category_rules,
     DEFAULT_RULES
 )
+from .domain_dictionaries import (
+    get_domain_dictionary,
+    get_all_domain_terms,
+    get_domains_list
+)
+from .acronym_expander import (
+    AcronymExpander,
+    create_acronym_glossary
+)
 
 __all__ = [
     # Main classes
@@ -42,7 +52,16 @@ __all__ = [
     "get_default_rules",
     "get_minimal_rules",
     "get_category_rules",
-    "DEFAULT_RULES"
+    "DEFAULT_RULES",
+
+    # Domain dictionaries (Phase 2)
+    "get_domain_dictionary",
+    "get_all_domain_terms",
+    "get_domains_list",
+
+    # Acronym expansion (Phase 2)
+    "AcronymExpander",
+    "create_acronym_glossary",
 ]
 
 # Module metadata
