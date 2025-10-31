@@ -2,7 +2,7 @@
 
 **Privacy-first audio transcription with speaker diarization. Entirely offline.**
 
-Transform recordings into detailed transcripts showing who said what and when—all on your Mac, with complete privacy.
+Transform recordings into detailed transcripts showing who said what and when—all on your Mac, with complete privacy.  
 
 <div align="center">
 
