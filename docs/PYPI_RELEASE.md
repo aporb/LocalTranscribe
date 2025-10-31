@@ -82,7 +82,7 @@ vim CHANGELOG.md  # Add release notes
 
 # 3. Commit changes
 git add .
-git commit -m "Release v2.0.0"
+git commit -m "Release v3.1.0"
 git push origin main
 ```
 
@@ -96,8 +96,8 @@ rm -rf dist/ build/ *.egg-info
 python3 -m build
 
 # This creates:
-# - dist/localtranscribe-2.0.0-py3-none-any.whl (wheel)
-# - dist/localtranscribe-2.0.0.tar.gz (source)
+# - dist/localtranscribe-3.1.0-py3-none-any.whl (wheel)
+# - dist/localtranscribe-3.1.0.tar.gz (source)
 ```
 
 ### Step 3: Test on TestPyPI
@@ -134,11 +134,11 @@ open https://pypi.org/project/localtranscribe/
 
 ```bash
 # Tag the release
-git tag -a v2.0.0 -m "Release version 2.0.0"
-git push origin v2.0.0
+git tag -a v3.1.0 -m "Release version 3.1.0"
+git push origin v3.1.0
 
 # Or create release on GitHub
-gh release create v2.0.0 --title "v2.0.0" --notes "See CHANGELOG.md"
+gh release create v3.1.0 --title "v3.1.0" --notes "See CHANGELOG.md"
 ```
 
 ---
@@ -169,14 +169,14 @@ We follow [Semantic Versioning](https://semver.org/):
 
 **Format:** `MAJOR.MINOR.PATCH`
 
-- **MAJOR** - Breaking changes (e.g., 1.0.0 → 2.0.0)
-- **MINOR** - New features, backward compatible (e.g., 2.0.0 → 2.1.0)
-- **PATCH** - Bug fixes, backward compatible (e.g., 2.0.0 → 2.0.1)
+- **MAJOR** - Breaking changes (e.g., 2.0.0 → 3.0.0)
+- **MINOR** - New features, backward compatible (e.g., 3.0.0 → 3.1.0)
+- **PATCH** - Bug fixes, backward compatible (e.g., 3.1.0 → 3.1.1)
 
 **Pre-release tags:**
-- `2.0.0-alpha` - Early testing
-- `2.0.0-beta` - Feature complete, testing
-- `2.0.0-rc1` - Release candidate
+- `3.2.0-alpha` - Early testing
+- `3.2.0-beta` - Feature complete, testing
+- `3.2.0-rc1` - Release candidate
 
 ---
 
@@ -239,8 +239,8 @@ twine upload dist/*
 
 **Create git tag:**
 ```bash
-git tag -a v2.0.0 -m "Release 2.0.0"
-git push origin v2.0.0
+git tag -a v3.1.0 -m "Release 3.1.0"
+git push origin v3.1.0
 ```
 
 ---
@@ -266,4 +266,4 @@ git push origin v2.0.0
 
 ---
 
-**Last Updated:** 2025-10-13 (Phase 4)
+**Last Updated:** 2025-10-30 (v3.1.0)

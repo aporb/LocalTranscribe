@@ -53,8 +53,8 @@ All version sources must be kept in sync:
 **Usage:**
 ```bash
 # Create and push a new release
-git tag -a v2.0.2 -m "Release version 2.0.2"
-git push origin v2.0.2
+git tag -a v3.1.0 -m "Release version 3.1.0"
+git push origin v3.1.0
 ```
 
 ### Version Display Workflow (`.github/workflows/version-display.yml`)
@@ -80,20 +80,20 @@ git push origin v2.0.2
 
 ```bash
 # 1. Synchronize versions
-# Update pyproject.toml to version = "2.0.2"
-# Update localtranscribe/__init__.py to __version__ = "2.0.2"
+# Update pyproject.toml to version = "3.1.0"
+# Update localtranscribe/__init__.py to __version__ = "3.1.0"
 
 # 2. Update CHANGELOG.md
 # Add new version section with changes
 
 # 3. Commit changes
 git add .
-git commit -m "Release v2.0.2"
+git commit -m "Release v3.1.0"
 
 # 4. Create and push tag
-git tag -a v2.0.2 -m "Release version 2.0.2"
+git tag -a v3.1.0 -m "Release version 3.1.0"
 git push origin main
-git push origin v2.0.2
+git push origin v3.1.0
 
 # 5. GitHub Actions will automatically:
 # - Build the package
@@ -167,7 +167,7 @@ To enable automatic PyPI publishing, you need to configure a PyPI API token as a
 
 After adding the secret, the next release workflow should automatically publish to PyPI.
 
-**Note:** The release workflow is now configured with PyPI authentication. Creating a v3.0.0 tag will automatically publish to PyPI.
+**Note:** The release workflow is now configured with PyPI authentication. Creating a version tag (e.g., v3.1.0) will automatically publish to PyPI.
 
 ---
 
@@ -205,7 +205,7 @@ Structure CHANGELOG.md entries with:
 
 Always use annotated tags:
 ```bash
-git tag -a v2.0.2 -m "Release version 2.0.2"
+git tag -a v3.1.0 -m "Release version 3.1.0"
 ```
 
 ---
