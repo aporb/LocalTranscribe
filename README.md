@@ -597,7 +597,15 @@ This command diagnoses common setup issues and suggests fixes.
 
 ## What's New
 
-### v3.1.1 (Current) - Context-Aware Intelligence 🧠
+### v3.1.2 (Current) - Stability & Progress Tracking 🔧
+- 🐛 **Critical Bug Fix** - Fixed `name 'Span' is not defined` error in combination stage
+- 📊 **Live Progress Tracking** - Real-time progress bars for MLX-Whisper and Original Whisper during transcription
+- ⏱️ **Time Estimates** - Shows elapsed time and estimated remaining time during processing
+- ⚡ **Background Progress Updates** - Non-blocking progress tracker updating every 0.5s
+- ✅ **Improved User Experience** - No more silent waits during long transcriptions
+- 🔧 **Type Hint Fixes** - Proper deferred evaluation for optional dependencies
+
+### v3.1.1 - Context-Aware Intelligence 🧠
 - 🧠 **Context-Aware Matching** - spaCy NER for intelligent acronym disambiguation (IP, PR, AI, OR, PI)
 - ⚡ **High-Performance Matching** - FlashText integration for 10-100x faster dictionary lookups
 - ✨ **Typo Tolerance** - RapidFuzz fuzzy matching for automatic typo correction (85% threshold)
