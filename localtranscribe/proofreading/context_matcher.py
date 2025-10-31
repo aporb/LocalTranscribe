@@ -5,6 +5,8 @@ Provides intelligent disambiguation of terms based on surrounding context,
 entity recognition, and keyword analysis.
 """
 
+from __future__ import annotations
+
 from typing import Dict, List, Optional, Tuple, Any
 import re
 import warnings

@@ -8,6 +8,7 @@ import os
 import json
 import time
 import warnings
+import threading
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass, field
@@ -23,6 +24,77 @@ try:
     TQDM_AVAILABLE = True
 except ImportError:
     TQDM_AVAILABLE = False
+
+
+class ProgressTracker:
+    """
+    Time-based progress tracker for blocking transcription operations.
+    Shows estimated progress based on elapsed time vs estimated total time.
+    """
+
+    def __init__(self, estimated_duration: float, update_interval: float = 0.5):
+        """
+        Initialize progress tracker.
+
+        Args:
+            estimated_duration: Estimated total duration in seconds
+            update_interval: How often to update progress (seconds)
+        """
+        self.estimated_duration = estimated_duration
+        self.update_interval = update_interval
+        self.start_time = None
+        self.stop_flag = threading.Event()
+        self.thread = None
+        self.pbar = None
+
+    def _update_loop(self):
+        """Background thread loop that updates progress bar."""
+        if not TQDM_AVAILABLE:
+            # Fallback to simple text updates
+            while not self.stop_flag.is_set():
+                elapsed = time.time() - self.start_time
+                progress_pct = min(99, (elapsed / self.estimated_duration) * 100)
+                remaining = max(0, self.estimated_duration - elapsed)
+                print(f"\r⏳ Transcribing... {progress_pct:.1f}% | Elapsed: {elapsed:.0f}s | Est. remaining: {remaining:.0f}s", end="", flush=True)
+                self.stop_flag.wait(self.update_interval)
+            print()  # New line when done
+        else:
+            # Use tqdm progress bar
+            self.pbar = tqdm(
+                total=int(self.estimated_duration),
+                unit="s",
+                desc="Transcription",
+                bar_format="{l_bar}{bar}| {n:.0f}/{total:.0f}s [{elapsed}<{remaining}]",
+                leave=False
+            )
+
+            while not self.stop_flag.is_set():
+                elapsed = time.time() - self.start_time
+                # Update progress but cap at 99% to avoid going over 100% before completion
+                progress = min(self.estimated_duration * 0.99, elapsed)
+                self.pbar.n = int(progress)
+                self.pbar.refresh()
+                self.stop_flag.wait(self.update_interval)
+
+    def start(self):
+        """Start the progress tracker."""
+        self.start_time = time.time()
+        self.stop_flag.clear()
+        self.thread = threading.Thread(target=self._update_loop, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        """Stop the progress tracker."""
+        self.stop_flag.set()
+        if self.thread:
+            self.thread.join(timeout=1.0)
+        if self.pbar:
+            self.pbar.n = self.pbar.total
+            self.pbar.refresh()
+            self.pbar.close()
+        # Clear the progress line if using simple text
+        if not TQDM_AVAILABLE:
+            print("\r" + " " * 100 + "\r", end="", flush=True)
 
 
 @dataclass
@@ -236,6 +308,7 @@ def transcribe_with_mlx(
     # Transcribe with progress tracking
     print(f"⏳ Transcribing audio{f' ({audio_duration:.1f}s)' if audio_duration else ''}...")
 
+    progress_tracker = None
     if audio_duration:
         # Show estimated progress based on benchmarks
         # MLX-Whisper benchmarks: ~0.12x realtime for large model on M-series
@@ -249,7 +322,17 @@ def transcribe_with_mlx(
         estimated_time = audio_duration * model_speeds.get(model_size, 0.1)
         print(f"⏱️  Estimated time: {estimated_time:.1f}s (this may vary)")
 
-    result = mlx_whisper.transcribe(str(audio_file), path_or_hf_repo=model_repo, language=language)
+        # Start progress tracker
+        progress_tracker = ProgressTracker(estimated_time)
+        progress_tracker.start()
+
+    try:
+        result = mlx_whisper.transcribe(str(audio_file), path_or_hf_repo=model_repo, language=language)
+    finally:
+        # Stop progress tracker
+        if progress_tracker:
+            progress_tracker.stop()
+
     print("✓ Transcription complete")
 
     # Extract data
@@ -395,10 +478,43 @@ def transcribe_with_original_whisper(
     ):
         model = whisper.load_model(model_size, device=device)
 
+    # Get audio duration for progress estimation
+    try:
+        audio_duration = _get_audio_duration(audio_file)
+    except:
+        audio_duration = None
+
+    # Show progress estimation
+    print(f"⏳ Transcribing audio{f' ({audio_duration:.1f}s)' if audio_duration else ''}...")
+
+    progress_tracker = None
+    if audio_duration:
+        # OpenAI Whisper benchmarks: slower than MLX, ~0.2x realtime
+        model_speeds = {
+            "tiny": 0.05,
+            "base": 0.10,
+            "small": 0.15,
+            "medium": 0.20,
+            "large": 0.30,
+        }
+        estimated_time = audio_duration * model_speeds.get(model_size, 0.2)
+        print(f"⏱️  Estimated time: {estimated_time:.1f}s (this may vary)")
+
+        # Start progress tracker
+        progress_tracker = ProgressTracker(estimated_time)
+        progress_tracker.start()
+
     # Run transcription
-    result = model.transcribe(
-        str(audio_file), language=language, task="transcribe", fp16=False if device.type == 'cpu' else True
-    )
+    try:
+        result = model.transcribe(
+            str(audio_file), language=language, task="transcribe", fp16=False if device.type == 'cpu' else True
+        )
+    finally:
+        # Stop progress tracker
+        if progress_tracker:
+            progress_tracker.stop()
+
+    print("✓ Transcription complete")
 
     # Extract data
     text = result['text']
