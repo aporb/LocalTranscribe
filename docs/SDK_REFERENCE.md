@@ -417,23 +417,44 @@ A single quality issue with severity.
 
 ---
 
-### Proofreader (v3.1)
+### Proofreader (v3.1.1)
 
-Enhanced proofreading with domain dictionaries and acronym expansion.
+Enhanced proofreading with domain dictionaries, acronym expansion, and context-aware intelligence.
 
 #### `__init__(...)`
 
-Initialize proofreader with enhanced features.
+Initialize proofreader with enhanced features including context-aware matching and automatic model management.
 
-**Parameters:**
+**Basic Parameters:**
 - `rules` (Optional[Dict]): Custom proofreading rules
 - `level` (ProofreadingLevel): Thoroughness level (minimal, standard, thorough)
 - `track_changes` (bool): Track individual changes. Default: True
 - `verbose` (bool): Enable verbose logging. Default: False
+
+**Domain Dictionaries (v3.1):**
 - `enable_domain_dictionaries` (bool): Enable domain-specific corrections. Default: False
-- `domains` (Optional[List[str]]): Domains to enable. Options: "military", "technical", "business", "medical", "common", "entities". Default: ["common"]
+- `domains` (Optional[List[str]]): Domains to enable. Options: "military", "technical", "business", "medical", "legal", "academic", "common", "entities". Default: ["common"]
+
+**Acronym Expansion (v3.1):**
 - `enable_acronym_expansion` (bool): Enable acronym expansion. Default: False
 - `acronym_format` (str): Expansion format: "parenthetical", "replacement", "footnote". Default: "parenthetical"
+- `expand_all_occurrences` (bool): Expand all occurrences vs. first only. Default: False
+
+**Context-Aware Features (v3.1.1 NEW):**
+- `enable_context_matching` (bool): Enable spaCy NER-based context analysis for acronym disambiguation. Default: False
+- `spacy_model` (str): spaCy model to use. Options: "en_core_web_sm", "en_core_web_md", "en_core_web_lg". Default: "en_core_web_sm"
+- `auto_download_model` (bool): Automatically prompt to download missing models. Default: False
+- `context_confidence_threshold` (float): Minimum confidence for context-based disambiguation (0-1). Default: 0.7
+- `context_window` (int): Number of tokens to analyze before/after acronym. Default: 5
+
+**Performance Features (v3.1.1 NEW):**
+- `use_fast_matcher` (bool): Use FlashText for high-performance dictionary matching (10-100x faster). Default: True
+- `flashtext_threshold` (int): Minimum dictionary size to trigger FlashText usage. Default: 100
+
+**Typo Correction (v3.1.1 NEW):**
+- `enable_fuzzy_matching` (bool): Enable RapidFuzz fuzzy string matching for typo correction. Default: False
+- `fuzzy_threshold` (int): Similarity threshold for fuzzy matches (0-100). Default: 85
+- `fuzzy_scorer` (str): Fuzzy scoring algorithm. Options: "WRatio", "QRatio". Default: "WRatio"
 
 #### `proofread(text: str) -> ProofreadingResult`
 
@@ -453,13 +474,38 @@ proofreader = Proofreader(level=ProofreadingLevel.STANDARD)
 result = proofreader.proofread(transcript_text)
 print(result.corrected_text)
 
-# With domain dictionaries and acronym expansion
+# With domain dictionaries and acronym expansion (v3.1)
 proofreader = Proofreader(
     level=ProofreadingLevel.THOROUGH,
     enable_domain_dictionaries=True,
     domains=["technical", "business", "common"],
     enable_acronym_expansion=True,
     acronym_format="parenthetical",  # API (Application Programming Interface)
+    verbose=True
+)
+
+result = proofreader.proofread(transcript_text)
+
+# NEW v3.1.1 - Full context-aware intelligence
+proofreader = Proofreader(
+    level=ProofreadingLevel.THOROUGH,
+    # Context-aware features
+    enable_context_matching=True,
+    spacy_model="en_core_web_sm",
+    auto_download_model=True,  # Will prompt if model missing
+    context_confidence_threshold=0.7,
+    context_window=5,
+    # High-performance matching
+    use_fast_matcher=True,
+    # Typo tolerance
+    enable_fuzzy_matching=True,
+    fuzzy_threshold=85,
+    # Domain dictionaries (360+ terms across 8 domains)
+    enable_domain_dictionaries=True,
+    domains=["technical", "business", "legal", "academic"],
+    # Acronym expansion (180+ definitions)
+    enable_acronym_expansion=True,
+    acronym_format="parenthetical",
     verbose=True
 )
 
@@ -490,6 +536,128 @@ Result from proofreading operation.
 
 **Methods:**
 - `get_summary() -> str`: Get human-readable summary of changes
+
+---
+
+### ModelManager (v3.1.1)
+
+Manages NLP model lifecycle including detection, downloading, and loading.
+
+#### `__init__(model_name: str = "en_core_web_sm", verbose: bool = False)`
+
+Initialize model manager for a specific spaCy model.
+
+**Parameters:**
+- `model_name` (str): spaCy model to manage. Options: "en_core_web_sm", "en_core_web_md", "en_core_web_lg". Default: "en_core_web_sm"
+- `verbose` (bool): Enable verbose logging. Default: False
+
+**Available Models:**
+- `en_core_web_sm`: 13 MB, fast, good for most use cases
+- `en_core_web_md`: 43 MB, medium speed, better accuracy
+- `en_core_web_lg`: 741 MB, slow, maximum accuracy
+
+#### `is_model_installed() -> bool`
+
+Check if the configured model is installed.
+
+**Returns:** `bool` - True if model is available
+
+#### `download_model(quiet: bool = False) -> bool`
+
+Download the configured model using spaCy's download mechanism.
+
+**Parameters:**
+- `quiet` (bool): Suppress download output. Default: False
+
+**Returns:** `bool` - True if download succeeded
+
+#### `prompt_download(model_name: Optional[str] = None) -> bool`
+
+Interactive prompt asking user if they want to download a model.
+
+**Parameters:**
+- `model_name` (Optional[str]): Override model name for prompt
+
+**Returns:** `bool` - True if user downloaded the model
+
+**Example:**
+```python
+from localtranscribe.proofreading.model_manager import ModelManager
+
+# Check if model is installed
+manager = ModelManager(model_name="en_core_web_sm")
+
+if not manager.is_model_installed():
+    print("Model not found")
+    # Interactive prompt
+    if manager.prompt_download():
+        print("Model downloaded successfully!")
+    else:
+        print("User declined download")
+
+# Direct download without prompt
+manager = ModelManager(model_name="en_core_web_md", verbose=True)
+success = manager.download_model(quiet=False)
+```
+
+#### Module Functions
+
+**`check_dependencies() -> Dict[str, Any]`**
+
+Check status of all NLP dependencies.
+
+**Returns:** Dictionary with:
+- `spacy_installed` (bool): Whether spaCy is installed
+- `flashtext_available` (bool): Whether FlashText is available
+- `rapidfuzz_available` (bool): Whether RapidFuzz is available
+- `installed_models` (List[str]): List of installed spaCy models
+- `context_aware_ready` (bool): Whether context-aware features are ready
+
+**Example:**
+```python
+from localtranscribe.proofreading.model_manager import check_dependencies
+
+status = check_dependencies()
+
+print(f"spaCy: {status['spacy_installed']}")
+print(f"FlashText: {status['flashtext_available']}")
+print(f"RapidFuzz: {status['rapidfuzz_available']}")
+print(f"Installed models: {status['installed_models']}")
+print(f"Context-aware ready: {status['context_aware_ready']}")
+```
+
+**`ensure_spacy_model(model_name: str = "en_core_web_sm", auto_download: bool = False, quiet: bool = False) -> Tuple[Optional[Any], bool]`**
+
+Ensure a spaCy model is available, optionally downloading if missing.
+
+**Parameters:**
+- `model_name` (str): Model to ensure is available
+- `auto_download` (bool): Automatically prompt for download if missing. Default: False
+- `quiet` (bool): Suppress output. Default: False
+
+**Returns:** Tuple of:
+- `nlp` (Optional[Any]): Loaded spaCy Language object, or None if unavailable
+- `ready` (bool): Whether model is ready to use
+
+**Example:**
+```python
+from localtranscribe.proofreading.model_manager import ensure_spacy_model
+
+# Load model, auto-prompt if missing
+nlp, ready = ensure_spacy_model(
+    model_name="en_core_web_sm",
+    auto_download=True,
+    quiet=False
+)
+
+if ready:
+    # Use nlp for context analysis
+    doc = nlp("The IP address is 192.168.1.1")
+    for ent in doc.ents:
+        print(f"{ent.text}: {ent.label_}")
+else:
+    print("Model not available, falling back to basic mode")
+```
 
 ---
 

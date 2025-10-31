@@ -48,14 +48,17 @@ Transform recordings into detailed transcripts showing who said what and when—
 - **🔄 Batch Processing** - Process multiple files simultaneously
 - **📊 Multiple Formats** - Output as TXT, JSON, SRT, or Markdown
 
-### Quality Enhancements (v3.1)
+### Quality Enhancements (v3.1.1)
 - **🎯 Intelligent Segment Processing** - 50-70% reduction in false speaker switches
 - **🧠 Enhanced Speaker Mapping** - 30-40% better speaker attribution accuracy
 - **🔊 Audio Quality Analysis** - Pre-processing quality assessment with SNR calculation
 - **✅ Quality Gates System** - Per-stage validation with actionable recommendations
-- **📚 Domain Dictionaries** - 260+ specialized terms (technical, business, military, medical)
-- **🔤 Acronym Expansion** - 80+ definitions with intelligent context-aware expansion
-- **✨ Enhanced Proofreading** - Domain-specific corrections and acronym handling
+- **📚 Domain Dictionaries** - 360+ specialized terms across 8 domains (military, technical, business, medical, legal, academic, common, entities)
+- **🔤 Acronym Expansion** - 180+ definitions with intelligent context-aware disambiguation
+- **🧠 Context-Aware Matching** - spaCy NER for intelligent acronym disambiguation (IP, PR, AI, OR, PI)
+- **⚡ High-Performance Matching** - FlashText integration for 10-100x faster dictionary lookups
+- **✨ Typo Tolerance** - RapidFuzz fuzzy matching for automatic typo correction
+- **🤖 Auto-Download Models** - Automatic spaCy model management with user prompts
 - **📊 Real-Time Progress Tracking** - Live progress bars and time estimates during transcription
 
 ---
@@ -237,11 +240,15 @@ localtranscribe process meeting.mp3 --proofread --proofread-level thorough
 # Custom proofreading rules
 localtranscribe process meeting.mp3 --proofread --proofread-rules my-rules.json
 
-# NEW in v3.1: Enable domain-specific dictionaries (260+ specialized terms)
-localtranscribe process meeting.mp3 --proofread --domains technical business
+# NEW in v3.1.1: Enable domain-specific dictionaries (360+ specialized terms)
+localtranscribe process meeting.mp3 --proofread --domains technical business legal
 
-# NEW in v3.1: Enable acronym expansion (80+ definitions)
-localtranscribe process meeting.mp3 --proofread --expand-acronyms
+# NEW in v3.1.1: Enable context-aware acronym expansion (180+ definitions)
+localtranscribe process meeting.mp3 --proofread --expand-acronyms --context-aware
+
+# Check NLP model status and download if needed
+localtranscribe check-models
+localtranscribe check-models --download en_core_web_sm
 ```
 
 **Proofreading fixes:**
@@ -253,9 +260,13 @@ localtranscribe process meeting.mp3 --proofread --expand-acronyms
 - Contractions and grammar
 - Excessive repetitions
 
-**v3.1 Enhancements:**
-- **Domain Dictionaries**: 260+ specialized terms across 6 domains (military, technical, business, medical, common, entities)
-- **Acronym Expansion**: 80+ definitions with intelligent context-aware expansion
+**v3.1.1 Enhancements:**
+- **Domain Dictionaries**: 360+ specialized terms across 8 domains (military, technical, business, medical, legal, academic, common, entities)
+- **Acronym Expansion**: 180+ definitions with intelligent context-aware disambiguation
+- **Context-Aware Matching**: spaCy NER for intelligent acronym resolution (IP, PR, AI, OR, PI)
+- **High-Performance Matching**: FlashText integration for 10-100x faster dictionary lookups
+- **Typo Tolerance**: RapidFuzz fuzzy matching for automatic typo correction
+- **Auto-Download Models**: Automatic spaCy model management with user prompts
 - **Multiple Formats**: Parenthetical `API (Application Programming Interface)`, replacement, or footnote styles
 
 ### Batch Processing
@@ -419,6 +430,7 @@ localtranscribe audio.mp3              # Automatically runs wizard - perfect for
 | `process` | Direct transcription without wizard | `localtranscribe process audio.mp3` |
 | `batch` | Process multiple files | `localtranscribe batch ./folder/` |
 | `doctor` | Verify system setup | `localtranscribe doctor` |
+| `check-models` | 🔍 **Check NLP model status and download models** | `localtranscribe check-models` |
 | `label` | Replace speaker IDs with names | `localtranscribe label output.md` |
 | `version` | Show version information | `localtranscribe version` |
 | `config` | Manage configuration | `localtranscribe config show` |
@@ -427,17 +439,22 @@ localtranscribe audio.mp3              # Automatically runs wizard - perfect for
 
 Run `localtranscribe --help` or `localtranscribe <command> --help` for detailed options.
 
-**New in v3.1.0:**
+**New in v3.1.1:**
 - 🎯 **Intelligent Segment Processing** - Filters micro-segments, merges continuations (50-70% fewer false switches)
 - 🧠 **Enhanced Speaker Mapping** - Region-based context for better attribution (30-40% accuracy improvement)
 - 🔊 **Audio Quality Analysis** - Pre-processing SNR, quality assessment, parameter recommendations
 - ✅ **Quality Gates System** - Per-stage validation with actionable recommendations
-- 📚 **Domain Dictionaries** - 260+ specialized terms across 6 domains (technical, business, military, medical, common, entities)
-- 🔤 **Acronym Expansion** - 80+ definitions with multiple formats (parenthetical, replacement, footnote)
+- 📚 **Domain Dictionaries** - 360+ specialized terms across 8 domains (military, technical, business, medical, legal, academic, common, entities)
+- 🔤 **Acronym Expansion** - 180+ definitions with intelligent context-aware disambiguation
+- 🧠 **Context-Aware Matching** - spaCy NER for intelligent acronym disambiguation (IP, PR, AI, OR, PI)
+- ⚡ **High-Performance Matching** - FlashText integration for 10-100x faster dictionary lookups
+- ✨ **Typo Tolerance** - RapidFuzz fuzzy matching for automatic typo correction
+- 🤖 **Auto-Download Models** - Automatic spaCy model management with interactive user prompts
+- 🔍 **Model Status CLI** - `check-models` command to verify and download NLP models
 - 📊 **Real-Time Progress Tracking** - Live progress bars (Faster-Whisper) and time estimates (MLX-Whisper) during transcription
-- ⚙️ **15+ New Configuration Options** - Fine-tune quality thresholds, enable domain corrections, control expansion
+- ⚙️ **20+ New Configuration Options** - Fine-tune quality thresholds, enable context-aware features
 - 📊 **Quality Reports** - Comprehensive quality assessment with severity indicators and recommendations
-- 🚀 **~3,400 Lines of Production Code** - 7 new files, 10+ new dataclasses, 40+ new methods
+- 🚀 **~4,500 Lines of Production Code** - 12 new files, 15+ new dataclasses, 60+ new methods
 - ✨ **100% Backward Compatible** - All features are opt-in and configurable
 
 **New in v3.0.0:**
@@ -580,7 +597,19 @@ This command diagnoses common setup issues and suggests fixes.
 
 ## What's New
 
-### v3.1.0 (Current) - Quality Revolution 🎯
+### v3.1.1 (Current) - Context-Aware Intelligence 🧠
+- 🧠 **Context-Aware Matching** - spaCy NER for intelligent acronym disambiguation (IP, PR, AI, OR, PI)
+- ⚡ **High-Performance Matching** - FlashText integration for 10-100x faster dictionary lookups
+- ✨ **Typo Tolerance** - RapidFuzz fuzzy matching for automatic typo correction (85% threshold)
+- 🤖 **Auto-Download Models** - Automatic spaCy model management with interactive user prompts
+- 🔍 **Model Status CLI** - New `check-models` command to verify and download NLP models
+- 📚 **Expanded Dictionaries** - 360+ specialized terms across 8 domains (added Legal and Academic)
+- 🔤 **Enhanced Acronyms** - 180+ definitions with context-aware disambiguation
+- 📊 **Frequency Tracking** - Usage statistics for intelligent expansion decisions
+- ⚙️ **20+ Configuration Options** - New context-aware and fuzzy matching parameters
+- ✨ **100% Backward Compatible** - All features are opt-in and configurable
+
+### v3.1.0 - Quality Revolution 🎯
 - 🎯 **Intelligent Segment Processing** - 50-70% reduction in false speaker switches
 - 🧠 **Enhanced Speaker Mapping** - 30-40% better speaker attribution accuracy
 - 🔊 **Audio Quality Analysis** - Pre-processing SNR and quality assessment

@@ -215,6 +215,138 @@ This issue was fixed in v2.0.1-beta with updated pyannote.audio 3.x compatibilit
 
 ---
 
+## NLP Model Issues (v3.1.1)
+
+### Context-aware features not working
+
+**Fix:**
+
+1. Check model status:
+   ```bash
+   localtranscribe check-models
+   ```
+
+2. Download required model:
+   ```bash
+   localtranscribe check-models --download en_core_web_sm
+   ```
+
+3. Or install manually:
+   ```bash
+   python -m spacy download en_core_web_sm
+   ```
+
+### spaCy not installed
+
+**Symptoms:** `check-models` shows spaCy missing
+
+**Fix:**
+```bash
+pip install spacy>=3.7.0
+```
+
+### Model download fails
+
+**Fix:**
+
+1. Check internet connection
+
+2. Try manual download:
+   ```bash
+   python -m spacy download en_core_web_sm
+   ```
+
+3. If behind proxy, configure:
+   ```bash
+   export HTTP_PROXY="http://proxy.example.com:8080"
+   export HTTPS_PROXY="https://proxy.example.com:8080"
+   python -m spacy download en_core_web_sm
+   ```
+
+### FlashText or RapidFuzz missing
+
+**Symptoms:** Features work but performance is reduced
+
+**Fix:**
+```bash
+# Install optional performance dependencies
+pip install flashtext>=2.7
+pip install rapidfuzz>=3.6.0
+```
+
+**Note:** These are optional. Basic proofreading works without them, just slower.
+
+### Wrong model installed
+
+**Fix:**
+
+1. Check installed models:
+   ```bash
+   localtranscribe check-models --detailed
+   ```
+
+2. Install preferred model:
+   ```bash
+   # Small (13 MB) - Good for most use cases
+   localtranscribe check-models --download en_core_web_sm
+
+   # Medium (43 MB) - Better accuracy
+   localtranscribe check-models --download en_core_web_md
+
+   # Large (741 MB) - Maximum accuracy
+   localtranscribe check-models --download en_core_web_lg
+   ```
+
+3. Specify in code:
+   ```python
+   from localtranscribe.proofreading import Proofreader
+
+   proofreader = Proofreader(
+       enable_context_matching=True,
+       spacy_model="en_core_web_md",  # Use medium model
+       auto_download_model=True
+   )
+   ```
+
+### Context matching accuracy too low
+
+**Fix:**
+
+1. Try larger model for better NER:
+   ```bash
+   localtranscribe check-models --download en_core_web_md
+   ```
+
+2. Adjust confidence threshold:
+   ```python
+   proofreader = Proofreader(
+       enable_context_matching=True,
+       context_confidence_threshold=0.6,  # Lower = more aggressive (default: 0.7)
+       context_window=7  # Wider context (default: 5)
+   )
+   ```
+
+### Fuzzy matching making wrong corrections
+
+**Fix:**
+
+Increase similarity threshold:
+```python
+proofreader = Proofreader(
+    enable_fuzzy_matching=True,
+    fuzzy_threshold=90  # Stricter matching (default: 85)
+)
+```
+
+Or disable for specific use cases:
+```python
+proofreader = Proofreader(
+    enable_fuzzy_matching=False  # Disable if causing issues
+)
+```
+
+---
+
 ## Getting Help
 
 ### Health Check
