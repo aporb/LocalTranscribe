@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localtranscribe"
-version = "3.1.0"
-description = "Privacy-first audio transcription with speaker diarization, labeling, and proofreading. Entirely offline."
+version = "3.1.1"
+description = "Privacy-first audio transcription with speaker diarization, labeling, and context-aware proofreading. Entirely offline."
 authors = [{name = "LocalTranscribe Contributors"}]
 readme = "README.md"
 requires-python = ">=3.9"
@@ -46,6 +46,9 @@ dependencies = [
     "scipy>=1.7.0",
     "huggingface-hub>=0.16.0",
     "tqdm>=4.65.0",
+    "spacy>=3.7.0",
+    "flashtext>=2.7",
+    "rapidfuzz>=3.6.0",
 ]
 
 [project.optional-dependencies]

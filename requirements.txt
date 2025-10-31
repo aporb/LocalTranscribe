@@ -29,6 +29,11 @@ tqdm==4.67.1
 python-dotenv>=0.19.0
 pyyaml>=6.0.0
 
+# NLP and Text Processing (v3.1+ - Context-Aware Features)
+spacy>=3.7.0
+flashtext>=2.7
+rapidfuzz>=3.6.0
+
 # Hugging Face integration
 huggingface-hub==0.35.3
 
@@ -81,6 +86,13 @@ openai-whisper==20250625
 #
 # To install all dependencies:
 # pip install -r requirements.txt
+#
+# IMPORTANT: After installation, download the spaCy language model:
+# python -m spacy download en_core_web_sm
+#
+# For better accuracy with context-aware features, you can use larger models:
+# python -m spacy download en_core_web_md  # Medium model (43MB)
+# python -m spacy download en_core_web_lg  # Large model (741MB)
 #
 # For audio file format conversion, you may also need FFmpeg installed:
 # brew install ffmpeg
