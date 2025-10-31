@@ -96,7 +96,13 @@ class Proofreader:
         enable_domain_dictionaries: bool = False,
         domains: Optional[List[str]] = None,
         enable_acronym_expansion: bool = False,
-        acronym_format: str = "parenthetical"
+        acronym_format: str = "parenthetical",
+        # Phase 3.1.1 enhancements - Context-aware features
+        enable_context_matching: bool = False,
+        spacy_model: str = "en_core_web_sm",
+        auto_download_model: bool = False,
+        context_confidence_threshold: float = 0.7,
+        context_window: int = 5
     ):
         """
         Initialize proofreader.
@@ -111,6 +117,11 @@ class Proofreader:
             domains: List of domains to enable (e.g., ["technical", "business"])
             enable_acronym_expansion: Enable acronym expansion (Phase 2)
             acronym_format: Format for acronym expansion (parenthetical, replacement)
+            enable_context_matching: Enable context-aware disambiguation (v3.1.1)
+            spacy_model: SpaCy model to use (en_core_web_sm/md/lg)
+            auto_download_model: Automatically download spaCy model if missing
+            context_confidence_threshold: Minimum confidence for disambiguation (0.0-1.0)
+            context_window: Number of tokens before/after for context analysis
         """
         self.level = level
         self.track_changes = track_changes
@@ -122,6 +133,19 @@ class Proofreader:
         self.domains = domains or ["common"]
         self.enable_acronym_expansion = enable_acronym_expansion
         self.acronym_format = acronym_format
+
+        # Phase 3.1.1 enhancements - Context-aware features
+        self.enable_context_matching = enable_context_matching
+        self.spacy_model = spacy_model
+        self.auto_download_model = auto_download_model
+        self.context_confidence_threshold = context_confidence_threshold
+        self.context_window = context_window
+
+        # Initialize spaCy model if context-aware features requested
+        self.nlp = None
+        self.context_aware_ready = False
+        if self.enable_context_matching:
+            self._initialize_context_aware()
 
         # Load appropriate rules based on level
         if rules:
@@ -141,10 +165,61 @@ class Proofreader:
         # Initialize acronym expander if enabled
         self.acronym_expander = None
         if self.enable_acronym_expansion:
-            from .acronym_expander import AcronymExpander
-            self.acronym_expander = AcronymExpander(
-                first_occurrence_only=True
+            if self.context_aware_ready:
+                # Use intelligent expander with context awareness
+                from .acronym_expander import IntelligentAcronymExpander
+                self.acronym_expander = IntelligentAcronymExpander(
+                    nlp=self.nlp,
+                    first_occurrence_only=True,
+                    enable_context_matching=True,
+                    confidence_threshold=self.context_confidence_threshold,
+                    context_window=self.context_window
+                )
+                if self.verbose:
+                    print("✅ Using IntelligentAcronymExpander with context-aware disambiguation")
+            else:
+                # Fall back to basic expander
+                from .acronym_expander import AcronymExpander
+                self.acronym_expander = AcronymExpander(
+                    first_occurrence_only=True
+                )
+                if self.verbose:
+                    print("ℹ️  Using basic AcronymExpander (context-aware features disabled)")
+
+    def _initialize_context_aware(self) -> None:
+        """
+        Initialize context-aware features with automatic model management.
+
+        Handles spaCy model loading with automatic download prompts if needed.
+        Falls back gracefully if model is unavailable.
+        """
+        try:
+            from .model_manager import ensure_spacy_model
+
+            # Attempt to load spaCy model
+            self.nlp, self.context_aware_ready = ensure_spacy_model(
+                model_name=self.spacy_model,
+                auto_download=self.auto_download_model,
+                quiet=not self.verbose
             )
+
+            if self.context_aware_ready:
+                if self.verbose:
+                    print(f"✅ Context-aware proofreading enabled with '{self.spacy_model}'")
+                    print(f"   • Disambiguation confidence threshold: {self.context_confidence_threshold}")
+                    print(f"   • Context window: {self.context_window} tokens")
+            else:
+                if self.verbose:
+                    print("⚠️  Context-aware features unavailable - using basic mode")
+                    print("   • Acronym expansion will use first definition only")
+                    print("   • Domain dictionaries will use simple pattern matching")
+
+        except Exception as e:
+            if self.verbose:
+                print(f"⚠️  Error initializing context-aware features: {e}")
+                print("   Falling back to basic mode")
+            self.nlp = None
+            self.context_aware_ready = False
 
     def _load_rules_for_level(self, level: ProofreadingLevel) -> Dict[str, Any]:
         """Load rules based on proofreading level."""

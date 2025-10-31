@@ -53,6 +53,7 @@ app.command(name="doctor")(commands.doctor.doctor)
 app.add_typer(commands.config.app, name="config", help="Manage configuration")
 app.command(name="label")(commands.label.label)
 app.command(name="version")(commands.version.version)
+app.command(name="check-models")(commands.check_models.check_models)
 
 
 def is_audio_file(path_str: str) -> bool:
@@ -87,7 +88,7 @@ def main():
         first_arg = sys.argv[1]
 
         # If first argument is not a known command and looks like a file, route to wizard
-        known_commands = {'wizard', 'process', 'batch', 'doctor', 'config', 'label', 'version', '--help', '-h'}
+        known_commands = {'wizard', 'process', 'batch', 'doctor', 'config', 'label', 'version', 'check-models', '--help', '-h'}
 
         if first_arg not in known_commands and not first_arg.startswith('-'):
             # Check if it looks like an audio file
