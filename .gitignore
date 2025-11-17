@@ -1,5 +1,7 @@
 # User Files
 docs/IMPROVED_REVIEW_PROMPT.md
+CLAUDE.md
+.superdesign/**
 
 # Environment and secrets
 .env
