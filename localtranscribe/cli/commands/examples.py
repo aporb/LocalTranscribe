@@ -194,18 +194,43 @@ localtranscribe audio.mp3"""
     console.print("─" * 80)
     console.print()
 
-    # Example 7: Wizard Mode
+    # Example 7: New Export Formats & Audio Quality
+    console.print("[bold green]📄 New Export Formats (HTML, DOCX) + Quality Check[/bold green]")
+    console.print()
+    console.print("Perfect for: Professional documents, sharing, publishing")
+    console.print()
+
+    code7 = """# Check audio quality before processing
+localtranscribe process podcast.mp3 \\
+  --check-quality \\
+  --format html docx md json \\
+  --speakers 2 \\
+  --proofread"""
+    console.print(Syntax(code7, "bash", theme="monokai", padding=1))
+
+    console.print("[dim]Features used:[/dim]")
+    console.print("  • [cyan]--check-quality[/cyan]: Analyze audio SNR, recommend model")
+    console.print("  • [cyan]--format html[/cyan]: Color-coded speakers in browser-friendly HTML")
+    console.print("  • [cyan]--format docx[/cyan]: Professional Microsoft Word document")
+    console.print()
+    console.print("[dim]💡 HTML includes responsive design, dark mode, and print optimization[/dim]")
+    console.print("[dim]💡 DOCX includes metadata, speaker colors, and confidence indicators[/dim]")
+    console.print()
+    console.print("─" * 80)
+    console.print()
+
+    # Example 8: Wizard Mode
     console.print("[bold green]🧙 Wizard Mode (interactive)[/bold green]")
     console.print()
     console.print("Perfect for: First-time users, exploring options")
     console.print()
 
-    code7 = """# Start wizard (recommended for beginners)
+    code8 = """# Start wizard (recommended for beginners)
 localtranscribe wizard audio.mp3
 
 # Or simply
 localtranscribe audio.mp3"""
-    console.print(Syntax(code7, "bash", theme="monokai", padding=1))
+    console.print(Syntax(code8, "bash", theme="monokai", padding=1))
 
     console.print("[dim]The wizard guides you through:[/dim]")
     console.print("  • Model selection")

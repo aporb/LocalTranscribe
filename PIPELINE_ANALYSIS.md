@@ -415,16 +415,16 @@ localtranscribe process nonexistent.mp3  # Should show helpful error
 4. ✅ Add `--help-examples` flag
 
 ### Medium Priority (Week 2-3)
-5. Add configuration presets (`--preset podcast/meeting/interview`)
-6. Improve progress feedback with ETAs
-7. Add `--troubleshoot` diagnostic command
-8. Create interactive tutorial mode
+5. ✅ Add configuration presets (`--preset podcast/meeting/interview`)
+6. ✅ Improve progress feedback with ETAs
+7. ✅ Add enhanced diagnostic command (doctor enhancements)
+8. ✅ Hardware-based model recommendations
 
 ### Low Priority (Week 4+)
-9. Add DOCX export format
-10. Add speaker-colored HTML output
-11. Create web UI for non-CLI users
-12. Add audio quality warnings/suggestions
+9. ✅ Add DOCX export format
+10. ✅ Add speaker-colored HTML output
+11. ⏭️  Create web UI for non-CLI users (DEFERRED - out of scope)
+12. ✅ Add audio quality warnings/suggestions
 
 ---
 

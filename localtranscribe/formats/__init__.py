@@ -9,6 +9,8 @@ from .txt import TXTFormatter
 from .json_format import JSONFormatter
 from .srt import SRTFormatter
 from .vtt import VTTFormatter
+from .html_format import HTMLFormatter
+from .docx_format import DOCXFormatter
 
 __all__ = [
     "BaseFormatter",
@@ -17,6 +19,8 @@ __all__ = [
     "JSONFormatter",
     "SRTFormatter",
     "VTTFormatter",
+    "HTMLFormatter",
+    "DOCXFormatter",
 ]
 
 
@@ -38,6 +42,8 @@ def get_formatter(format_name: str) -> BaseFormatter:
         "json": JSONFormatter(),
         "srt": SRTFormatter(),
         "vtt": VTTFormatter(),
+        "html": HTMLFormatter(),
+        "docx": DOCXFormatter(),
         "md": None,  # Markdown uses existing implementation
     }
 

@@ -170,6 +170,12 @@ def process(
         "--expand-acronyms",
         help="Expand and explain acronyms in transcript",
     ),
+    # Audio quality analysis
+    check_quality: bool = typer.Option(
+        False,
+        "--check-quality",
+        help="Analyze audio quality and show recommendations before processing",
+    ),
 ):
     """
     🎙️ Process audio file with speaker diarization and transcription.
@@ -257,6 +263,46 @@ def process(
 
         if formats is None:
             formats = ["txt", "json", "md"]
+
+        # Check audio quality if requested
+        if check_quality:
+            try:
+                from ...utils.audio_quality import AudioQualityAnalyzer
+
+                console.print()
+                console.print("[bold cyan]🔍 Analyzing audio quality...[/bold cyan]")
+                console.print()
+
+                analyzer = AudioQualityAnalyzer()
+                quality_result = analyzer.analyze(audio_file)
+                analyzer.print_analysis(quality_result)
+
+                console.print()
+
+                # Ask if user wants to continue or adjust settings
+                if quality_result.warnings:
+                    if not typer.confirm(
+                        "Audio quality issues detected. Continue anyway?",
+                        default=True
+                    ):
+                        console.print("[yellow]Processing cancelled by user[/yellow]")
+                        sys.exit(0)
+
+                    # Suggest using recommended model if not already set
+                    if model_size == ModelSize.medium:  # Default
+                        recommended = quality_result.optimal_model
+                        if recommended != "medium":
+                            if typer.confirm(
+                                f"Use recommended model '{recommended}' instead of 'medium'?",
+                                default=True
+                            ):
+                                model_size = ModelSize(recommended)
+                                console.print(f"[green]✓ Using model: {recommended}[/green]")
+
+            except ImportError as e:
+                console.print(f"[yellow]⚠️  Audio quality check requires pydub: {e}[/yellow]")
+            except Exception as e:
+                console.print(f"[yellow]⚠️  Audio quality check failed: {e}[/yellow]")
 
         # Simple mode: Interactive setup with smart defaults
         if simple:
