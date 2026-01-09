@@ -40,12 +40,15 @@ app = typer.Typer(
     name="localtranscribe",
     help="LocalTranscribe - Easy audio transcription with speaker diarization\n\n"
          "💡 Tip: Run 'localtranscribe audio.mp3' to start the guided wizard!\n"
-         "💡 Or run 'localtranscribe' without arguments to browse files interactively!",
+         "💡 Or run 'localtranscribe' without arguments to browse files interactively!\n"
+         "📚 See example commands: 'localtranscribe examples'",
     add_completion=False,
 )
 console = Console()
 
 # Add commands
+app.command(name="init")(commands.init.init)
+app.command(name="examples")(commands.examples.examples)
 app.command(name="wizard")(commands.wizard.wizard)
 app.command(name="process")(commands.process.process)
 app.command(name="batch")(commands.batch.batch)
@@ -88,7 +91,7 @@ def main():
         first_arg = sys.argv[1]
 
         # If first argument is not a known command and looks like a file, route to wizard
-        known_commands = {'wizard', 'process', 'batch', 'doctor', 'config', 'label', 'version', 'check-models', '--help', '-h'}
+        known_commands = {'init', 'examples', 'wizard', 'process', 'batch', 'doctor', 'config', 'label', 'version', 'check-models', '--help', '-h', '--help-examples'}
 
         if first_arg not in known_commands and not first_arg.startswith('-'):
             # Check if it looks like an audio file
