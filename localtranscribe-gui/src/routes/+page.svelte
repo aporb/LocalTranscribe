@@ -1,6 +1,8 @@
 <script lang="ts">
   import { uiState, recentFilesState } from '$lib/stores.svelte';
   import { open } from '@tauri-apps/plugin-dialog';
+  import SettingsModal from '$lib/components/SettingsModal.svelte';
+  import AboutModal from '$lib/components/AboutModal.svelte';
 
   async function selectAudioFile() {
     try {
@@ -44,6 +46,10 @@
     return path.split('/').pop() || path.split('\\').pop() || path;
   }
 </script>
+
+<!-- Modals -->
+<SettingsModal open={uiState.settingsModalOpen} onClose={() => uiState.settingsModalOpen = false} />
+<AboutModal open={uiState.aboutModalOpen} onClose={() => uiState.aboutModalOpen = false} />
 
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950">
   <!-- Header -->

@@ -245,6 +245,18 @@ class UIState {
       | 'results'
   ) {
     this.currentView = view;
+    // Use SvelteKit routing for navigation
+    if (typeof window !== 'undefined') {
+      const routes: Record<typeof view, string> = {
+        'home': '/',
+        'file-select': '/file-select',
+        'quality-check': '/quality-check',
+        'config': '/config',
+        'processing': '/processing',
+        'results': '/results',
+      };
+      window.location.href = routes[view];
+    }
   }
 
   selectFile(file: string) {
