@@ -318,6 +318,159 @@ class HealthChecker:
         """Check python-dotenv installation."""
         return self.check_dependency("Python-dotenv", "dotenv")
 
+    def check_disk_space(self) -> CheckResult:
+        """Check available disk space."""
+        try:
+            import shutil
+
+            # Check current directory space
+            stat = shutil.disk_usage(Path.cwd())
+            free_gb = stat.free / (1024 ** 3)
+            total_gb = stat.total / (1024 ** 3)
+            percent_free = (stat.free / stat.total) * 100
+
+            details = [
+                f"Free space: {free_gb:.1f} GB / {total_gb:.1f} GB ({percent_free:.1f}% free)",
+                f"Location: {Path.cwd()}",
+            ]
+
+            if free_gb < 1.0:
+                return CheckResult(
+                    name="Disk Space",
+                    status="warning",
+                    message=f"Low disk space ({free_gb:.1f} GB free)",
+                    details=details + [
+                        "Models and output files require disk space",
+                        "Recommend at least 5 GB free for smooth operation",
+                    ],
+                )
+            elif free_gb < 5.0:
+                return CheckResult(
+                    name="Disk Space",
+                    status="pass",
+                    message=f"{free_gb:.1f} GB available",
+                    details=details + ["Consider freeing up space if processing large files"],
+                )
+            else:
+                return CheckResult(
+                    name="Disk Space",
+                    status="pass",
+                    message=f"{free_gb:.1f} GB available",
+                    details=details,
+                )
+        except Exception as e:
+            return CheckResult(
+                name="Disk Space",
+                status="warning",
+                message="Check failed",
+                details=[f"Error: {str(e)}"],
+            )
+
+    def check_model_cache(self) -> CheckResult:
+        """Check HuggingFace model cache status."""
+        try:
+            # Check HuggingFace cache directory
+            cache_dir = Path.home() / ".cache" / "huggingface"
+
+            if not cache_dir.exists():
+                return CheckResult(
+                    name="Model Cache",
+                    status="pass",
+                    message="No models cached yet",
+                    details=[
+                        "Models will be downloaded on first use",
+                        "Cache location: " + str(cache_dir),
+                        "Whisper medium model: ~1.5 GB",
+                        "Diarization models: ~300 MB",
+                    ],
+                )
+
+            # Calculate cache size
+            total_size = 0
+            file_count = 0
+            for item in cache_dir.rglob("*"):
+                if item.is_file():
+                    total_size += item.stat().st_size
+                    file_count += 1
+
+            size_gb = total_size / (1024 ** 3)
+
+            # Check for specific models
+            hub_cache = cache_dir / "hub"
+            models_found = []
+            if hub_cache.exists():
+                # Look for pyannote models
+                for model_dir in hub_cache.glob("models--*"):
+                    model_name = model_dir.name.replace("models--", "").replace("--", "/")
+                    if "pyannote" in model_name or "whisper" in model_name.lower():
+                        models_found.append(model_name)
+
+            details = [
+                f"Cache size: {size_gb:.2f} GB ({file_count} files)",
+                f"Location: {cache_dir}",
+            ]
+
+            if models_found:
+                details.append(f"Models cached: {len(models_found)}")
+                if self.verbose:
+                    for model in models_found[:5]:  # Show first 5
+                        details.append(f"  • {model}")
+                    if len(models_found) > 5:
+                        details.append(f"  ... and {len(models_found) - 5} more")
+
+            return CheckResult(
+                name="Model Cache",
+                status="pass",
+                message=f"{size_gb:.2f} GB cached",
+                details=details,
+            )
+        except Exception as e:
+            return CheckResult(
+                name="Model Cache",
+                status="warning",
+                message="Check failed",
+                details=[f"Error: {str(e)}"],
+            )
+
+    def check_output_permissions(self) -> CheckResult:
+        """Check write permissions for output directory."""
+        try:
+            test_dir = Path.cwd() / "output"
+
+            # Try to create output directory
+            test_dir.mkdir(parents=True, exist_ok=True)
+
+            # Try to write a test file
+            test_file = test_dir / ".localtranscribe_write_test"
+            try:
+                test_file.write_text("test")
+                test_file.unlink()  # Clean up
+
+                return CheckResult(
+                    name="Output Permissions",
+                    status="pass",
+                    message="Write access confirmed",
+                    details=[f"Output directory: {test_dir}"],
+                )
+            except PermissionError:
+                return CheckResult(
+                    name="Output Permissions",
+                    status="fail",
+                    message="No write permission",
+                    details=[
+                        f"Cannot write to: {test_dir}",
+                        "Check directory permissions",
+                        "Try running from a different directory",
+                    ],
+                )
+        except Exception as e:
+            return CheckResult(
+                name="Output Permissions",
+                status="warning",
+                message="Check failed",
+                details=[f"Error: {str(e)}"],
+            )
+
     def check_torchcodec(self) -> CheckResult:
         """Check torchcodec installation (optional dependency for pyannote.audio)."""
         import tempfile
@@ -396,8 +549,15 @@ class HealthChecker:
             ("TorchCodec", self.check_torchcodec),
         ]
 
+        # System resource checks (shown in verbose mode or if issues detected)
+        resource_checks = [
+            ("Disk Space", self.check_disk_space),
+            ("Model Cache", self.check_model_cache),
+            ("Output Permissions", self.check_output_permissions),
+        ]
+
         # Run checks
-        results = {"core": [], "whisper": None, "optional": []}
+        results = {"core": [], "whisper": None, "optional": [], "resources": []}
 
         # Core checks
         for name, check_func in core_checks:
@@ -416,13 +576,23 @@ class HealthChecker:
             results["optional"].append(result)
             self._print_check_result(result)
 
+        # Resource checks (always show in verbose mode)
+        if self.verbose:
+            self._print("\n[bold]System Resources:[/bold]\n" if self.console else "\nSystem Resources:\n")
+            for name, check_func in resource_checks:
+                result = check_func()
+                results["resources"].append(result)
+                self._print_check_result(result)
+
         # Determine overall status
         core_failures = [r for r in results["core"] if r.status == "fail"]
         whisper_failure = results["whisper"].status == "fail"
 
+        all_checks = results["core"] + results["optional"] + results["resources"] + [results["whisper"]]
+
         if core_failures or whisper_failure:
             overall_status = "critical"
-        elif any(r.status == "warning" for r in results["core"] + results["optional"] + [results["whisper"]]):
+        elif any(r.status == "warning" for r in all_checks):
             overall_status = "warning"
         else:
             overall_status = "healthy"
@@ -432,6 +602,7 @@ class HealthChecker:
             "core_checks": results["core"],
             "whisper_check": results["whisper"],
             "optional_checks": results["optional"],
+            "resource_checks": results["resources"],
         }
 
     def _print_check_result(self, result: CheckResult):

@@ -16,6 +16,7 @@ from ...utils.errors import (
     AudioFileNotFoundError,
     HuggingFaceTokenError,
 )
+from ...config.presets import PresetType, get_preset, apply_preset_to_args, show_preset_info
 
 # Create sub-app for process command
 app = typer.Typer()
@@ -152,6 +153,23 @@ def process(
         "--simple",
         help="Simple mode with smart defaults and interactive prompts",
     ),
+    # Configuration preset
+    preset: Optional[str] = typer.Option(
+        None,
+        "--preset",
+        help="Configuration preset (podcast, meeting, interview, lecture, quick, accurate)",
+    ),
+    # Advanced proofreading options
+    domains: Optional[List[str]] = typer.Option(
+        None,
+        "--domains",
+        help="Domain-specific dictionaries for proofreading (business, technical, academic, medical, legal, etc.)",
+    ),
+    expand_acronyms: bool = typer.Option(
+        False,
+        "--expand-acronyms",
+        help="Expand and explain acronyms in transcript",
+    ),
 ):
     """
     🎙️ Process audio file with speaker diarization and transcription.
@@ -167,21 +185,73 @@ def process(
         # Simple mode - interactive and beginner-friendly
         localtranscribe process audio.mp3 --simple
 
+        # Using presets (recommended)
+        localtranscribe process podcast.mp3 --preset podcast
+        localtranscribe process meeting.wav --preset meeting
+        localtranscribe process lecture.mp3 --preset lecture
+
         # Basic usage
         localtranscribe process audio.mp3
 
         # With speaker labels and proofreading
         localtranscribe process audio.mp3 --labels speakers.json --proofread
 
-        # Advanced usage
+        # Advanced usage with domains
         localtranscribe process audio.mp3 -o results/ -m medium -s 2 \\
-            --labels speakers.json --proofread --proofread-level thorough
+            --labels speakers.json --proofread --proofread-level thorough \\
+            --domains business technical --expand-acronyms
 
         # Skip diarization (single speaker)
         localtranscribe process lecture.mp3 --skip-diarization
     """
     try:
-        # Set defaults
+        # Apply preset configuration if specified
+        preset_applied = False
+        if preset:
+            try:
+                preset_type = PresetType(preset.lower())
+                preset_config = get_preset(preset_type)
+                preset_applied = True
+
+                # Show preset info if verbose
+                if verbose:
+                    console.print()
+                    console.print(show_preset_info(preset_type))
+                    console.print()
+
+                # Apply preset values to variables, but only if not explicitly set by user
+                # We check if the value equals the default from the typer.Option
+                if model_size == ModelSize.medium:  # Default value
+                    model_size = ModelSize(preset_config.model_size)
+                if num_speakers is None and preset_config.num_speakers is not None:
+                    num_speakers = preset_config.num_speakers
+                if min_speakers is None and preset_config.min_speakers is not None:
+                    min_speakers = preset_config.min_speakers
+                if max_speakers is None and preset_config.max_speakers is not None:
+                    max_speakers = preset_config.max_speakers
+                if not skip_diarization and preset_config.skip_diarization:
+                    skip_diarization = preset_config.skip_diarization
+                if language is None and preset_config.language is not None:
+                    language = preset_config.language
+                if formats is None:
+                    formats = preset_config.output_formats
+                if not proofread and preset_config.proofread:
+                    proofread = preset_config.proofread
+                if proofread_level == "standard":  # Default value
+                    proofread_level = preset_config.proofread_level
+                if domains is None and preset_config.domains:
+                    domains = preset_config.domains
+                if not expand_acronyms and preset_config.expand_acronyms:
+                    expand_acronyms = preset_config.expand_acronyms
+                if implementation == Implementation.auto and preset_config.whisper_implementation != "auto":
+                    implementation = Implementation(preset_config.whisper_implementation)
+
+            except ValueError:
+                console.print(f"[yellow]⚠️  Unknown preset: {preset}[/yellow]")
+                console.print(f"[yellow]Available presets: podcast, meeting, interview, lecture, quick, accurate[/yellow]")
+                console.print()
+
+        # Set defaults for parameters not set by preset
         if output_dir is None:
             output_dir = Path("./output")
 
@@ -243,6 +313,8 @@ def process(
             config_table.add_column("Setting", style="cyan")
             config_table.add_column("Value", style="white")
 
+            if preset_applied:
+                config_table.add_row("Preset", f"{preset} ✨")
             config_table.add_row("Audio File", str(audio_file))
             config_table.add_row("Output Directory", str(output_dir))
             config_table.add_row("Model Size", model_size.value)
@@ -251,6 +323,9 @@ def process(
             config_table.add_row("Output Formats", ", ".join(formats))
             if num_speakers:
                 config_table.add_row("Number of Speakers", str(num_speakers))
+            if min_speakers or max_speakers:
+                speaker_range = f"{min_speakers or 'any'}-{max_speakers or 'any'}"
+                config_table.add_row("Speaker Range", speaker_range)
             if language:
                 config_table.add_row("Language", language)
             if labels:
@@ -261,6 +336,10 @@ def process(
                 config_table.add_row("Proofreading", f"Enabled ({proofread_level})")
                 if proofread_rules:
                     config_table.add_row("Custom Rules", str(proofread_rules))
+                if domains:
+                    config_table.add_row("Domains", ", ".join(domains))
+                if expand_acronyms:
+                    config_table.add_row("Expand Acronyms", "Yes")
 
             console.print(config_table)
             console.print()
@@ -285,6 +364,8 @@ def process(
             enable_proofreading=proofread,
             proofreading_rules=proofread_rules,
             proofreading_level=proofread_level,
+            proofreading_domains=domains,
+            enable_acronym_expansion=expand_acronyms,
         )
 
         # Run pipeline

@@ -19,6 +19,11 @@ def doctor(
         "-v",
         help="Show detailed diagnostic information",
     ),
+    recommend_model: bool = typer.Option(
+        False,
+        "--recommend-model",
+        help="Show hardware-based model recommendations",
+    ),
 ):
     """
     🏥 Run health check to verify LocalTranscribe setup.
@@ -49,6 +54,39 @@ def doctor(
 
         # Run health check
         result = run_health_check(verbose=verbose)
+
+        # Show model recommendations if requested
+        if recommend_model:
+            try:
+                from ...utils.hardware_recommendations import (
+                    print_hardware_summary,
+                    print_recommendation,
+                    get_model_recommendation,
+                )
+
+                console.print()
+                console.print("[bold cyan]Hardware-Based Model Recommendations[/bold cyan]")
+                console.print()
+
+                # Show hardware summary
+                print_hardware_summary()
+                console.print()
+
+                # Show recommendations for different priorities
+                console.print("[bold]For Quick Processing (Speed Priority):[/bold]")
+                speed_rec = get_model_recommendation(priority="speed")
+                print_recommendation(speed_rec)
+
+                console.print("[bold]For Balanced Performance (Recommended):[/bold]")
+                balanced_rec = get_model_recommendation(priority="balanced")
+                print_recommendation(balanced_rec)
+
+                console.print("[bold]For Best Quality (Quality Priority):[/bold]")
+                quality_rec = get_model_recommendation(priority="quality")
+                print_recommendation(quality_rec)
+
+            except Exception as e:
+                console.print(f"[yellow]⚠️  Could not generate recommendations: {e}[/yellow]")
 
         # Exit with appropriate code
         if result["overall_status"] == "healthy":

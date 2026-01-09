@@ -37,6 +37,7 @@ from ..utils.errors import (
     AudioFileNotFoundError,
 )
 from ..utils.file_safety import FileSafetyManager, OverwriteAction
+from ..utils.progress_tracker import EnhancedProgressTracker
 
 
 class PipelineStage(Enum):
@@ -114,6 +115,9 @@ class PipelineOrchestrator:
         quality_report_path: Optional[Path] = None,
         proofreading_domains: Optional[List[str]] = None,
         enable_acronym_expansion: bool = False,
+        # Enhanced progress tracking
+        enable_progress_tracking: bool = True,
+        audio_duration_minutes: Optional[float] = None,
     ):
         """
         Initialize pipeline orchestrator.
@@ -183,6 +187,11 @@ class PipelineOrchestrator:
 
         # Setup console for Rich output
         self.console = Console() if RICH_AVAILABLE else None
+
+        # Enhanced progress tracking
+        self.enable_progress_tracking = enable_progress_tracking
+        self.audio_duration_minutes = audio_duration_minutes
+        self.progress_tracker = None  # Initialized in run() after validation
 
         # Setup file safety manager
         self.file_safety = FileSafetyManager(
@@ -689,6 +698,34 @@ class PipelineOrchestrator:
             self.validate_prerequisites()
             stages_completed.append("validation")
 
+            # Initialize progress tracker after validation
+            if self.enable_progress_tracking and self.verbose:
+                # Try to get audio duration for better estimates
+                if self.audio_duration_minutes is None:
+                    try:
+                        import subprocess
+                        result = subprocess.run(
+                            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                             "-of", "default=noprint_wrappers=1:nokey=1", str(self.audio_file)],
+                            capture_output=True,
+                            text=True,
+                            timeout=5
+                        )
+                        if result.returncode == 0 and result.stdout.strip():
+                            duration_seconds = float(result.stdout.strip())
+                            self.audio_duration_minutes = duration_seconds / 60
+                    except Exception:
+                        # Fallback to default estimate
+                        self.audio_duration_minutes = 10.0
+
+                self.progress_tracker = EnhancedProgressTracker(
+                    audio_duration_minutes=self.audio_duration_minutes,
+                    model_size=self.model_size,
+                    skip_diarization=self.skip_diarization,
+                    enable_proofreading=self.enable_proofreading,
+                    verbose=True,
+                )
+
             # Stage 0.5: Audio Analysis (Phase 2 - optional)
             audio_analysis_result = None
             if self.enable_audio_analysis and not self.skip_diarization:
@@ -698,23 +735,58 @@ class PipelineOrchestrator:
             # Stage 1: Diarization (optional)
             diarization_result = None
             if not self.skip_diarization:
+                if self.progress_tracker:
+                    self.progress_tracker.start_stage("Speaker Diarization")
                 diarization_result = self.run_diarization_stage()
                 stages_completed.append("diarization")
+                if self.progress_tracker:
+                    self.progress_tracker.add_intermediate_result(
+                        "Speakers Detected",
+                        diarization_result.num_speakers,
+                        display=True
+                    )
+                    self.progress_tracker.complete_stage(
+                        "Speaker Diarization",
+                        f"{diarization_result.num_speakers} speakers found"
+                    )
 
                 # Stage 2: Segment Processing (Phase 1 enhancement)
                 if self.enable_segment_processing:
+                    if self.progress_tracker:
+                        self.progress_tracker.start_stage("Segment Processing")
                     diarization_result = self.run_segment_processing_stage(diarization_result)
                     stages_completed.append("segment_processing")
+                    if self.progress_tracker:
+                        self.progress_tracker.complete_stage("Segment Processing")
 
             # Stage 3: Transcription
+            if self.progress_tracker:
+                self.progress_tracker.start_stage("Speech-to-Text")
             transcription_result = self.run_transcription_stage()
             stages_completed.append("transcription")
+            if self.progress_tracker:
+                self.progress_tracker.add_intermediate_result(
+                    "Language Detected",
+                    transcription_result.language,
+                    display=True
+                )
+                self.progress_tracker.complete_stage(
+                    "Speech-to-Text",
+                    f"Language: {transcription_result.language}"
+                )
 
             # Stage 4: Combination (only if diarization was done)
             combination_result = None
             if not self.skip_diarization:
+                if self.progress_tracker:
+                    self.progress_tracker.start_stage("Combining Results")
                 combination_result = self.run_combination_stage(diarization_result, transcription_result)
                 stages_completed.append("combination")
+                if self.progress_tracker:
+                    self.progress_tracker.complete_stage(
+                        "Combining Results",
+                        f"{len(combination_result.segments)} segments combined"
+                    )
 
             # Stage 4.5: Quality Assessment (Phase 2 - optional)
             quality_assessments = {}
@@ -742,8 +814,12 @@ class PipelineOrchestrator:
             # Stage 5: Proofreading (optional)
             final_output_file = main_output_file
             if self.enable_proofreading and main_output_file:
+                if self.progress_tracker:
+                    self.progress_tracker.start_stage("Proofreading")
                 final_output_file = self.run_proofreading_stage(main_output_file)
                 stages_completed.append("proofreading")
+                if self.progress_tracker:
+                    self.progress_tracker.complete_stage("Proofreading")
 
             # Calculate total time
             total_duration = time.time() - total_start
@@ -783,6 +859,10 @@ class PipelineOrchestrator:
                 elif self.verbose:
                     # Print quality report to console
                     self._print("\n" + quality_report, style="dim")
+
+            # Print progress summary if enabled
+            if self.progress_tracker:
+                self.progress_tracker.print_summary()
 
             # Print success summary
             self._print("\n" + "=" * 60, style="green")

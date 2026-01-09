@@ -31,6 +31,35 @@ def examples():
     ))
     console.print()
 
+    # Example 0: Using Presets (NEW!)
+    console.print("[bold green]✨ Using Configuration Presets (NEW!)[/bold green]")
+    console.print()
+    console.print("Perfect for: Quick setup with optimized defaults")
+    console.print()
+
+    code0 = """# Podcast preset (2 speakers, medium model, standard proofreading)
+localtranscribe process podcast.mp3 --preset podcast
+
+# Meeting preset (3-8 speakers, thorough proofreading, business domains)
+localtranscribe process meeting.wav --preset meeting --verbose
+
+# Quick draft preset (small model, skip diarization, no proofreading)
+localtranscribe process audio.mp3 --preset quick"""
+    console.print(Syntax(code0, "bash", theme="monokai", padding=1))
+
+    console.print("[dim]Available presets:[/dim]")
+    console.print("  • [cyan]podcast[/cyan]: 2 speakers, media domain")
+    console.print("  • [cyan]meeting[/cyan]: 3-8 speakers, business/technical domains")
+    console.print("  • [cyan]interview[/cyan]: 2-3 speakers, academic domain")
+    console.print("  • [cyan]lecture[/cyan]: Single speaker, skip diarization")
+    console.print("  • [cyan]quick[/cyan]: Fast draft mode")
+    console.print("  • [cyan]accurate[/cyan]: Maximum quality, all features")
+    console.print()
+    console.print("[dim]💡 Tip: Override preset values with specific flags[/dim]")
+    console.print()
+    console.print("─" * 80)
+    console.print()
+
     # Example 1: Podcast
     console.print("[bold green]🎙️  Podcast Transcription (2 speakers)[/bold green]")
     console.print()
