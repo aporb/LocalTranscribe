@@ -39,11 +39,38 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "copyright": "Copyright © 2024-2026 LocalTranscribe Contributors",
+    "category": "Utility",
+    "shortDescription": "Privacy-first audio transcription",
+    "longDescription": "Convert audio files to text with AI-powered transcription, speaker identification, and intelligent proofreading. 100% offline and private. Powered by OpenAI Whisper.",
     "externalBin": [
       "binaries/localtranscribe-linux",
       "binaries/localtranscribe-macos",
       "binaries/localtranscribe.exe"
-    ]
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "wix": {
+        "language": "en-US"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.13",
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    }
   },
   "plugins": {
     "shell": {
@@ -64,7 +91,16 @@
           "sidecar": true,
           "args": true
         }
-      ]
+      ],
+      "open": true
+    },
+    "dialog": {
+      "open": {
+        "enable": true
+      },
+      "save": {
+        "enable": true
+      }
     }
   }
 }

@@ -32,7 +32,44 @@ Transform recordings into detailed transcripts showing who said what and when—
 
 ---
 
-## Features
+## Desktop GUI Application 🖥️
+
+LocalTranscribe now has a **beautiful desktop GUI** for those who prefer a visual interface!
+
+### Features
+- 🎨 **Modern, Intuitive Interface** - Beautiful UI with glassmorphism design
+- 🌓 **Dark Mode** - Full support for dark theme
+- 📂 **Drag-and-Drop** - Simply drag your audio files to transcribe
+- 📊 **Real-Time Progress** - Watch transcription progress with live updates
+- 🔍 **Audio Quality Analysis** - Pre-check audio quality before transcribing
+- ⚙️ **Visual Configuration** - Easy model selection and settings
+- 📄 **Multiple Export Formats** - TXT, JSON, SRT, VTT, Markdown, HTML, DOCX
+- 🚀 **Cross-Platform** - Works on Windows, macOS, and Linux
+
+### Download
+
+[**Download latest GUI release →**](https://github.com/aporb/LocalTranscribe/releases)
+
+- **Windows:** `.exe` installer or `.msi` package
+- **macOS:** Universal `.dmg` (Intel + Apple Silicon)
+- **Linux:** `.AppImage` or `.deb` package
+
+### Quick Start (GUI)
+
+1. **Download** the installer for your platform
+2. **Install** and launch LocalTranscribe
+3. **Select or drag** your audio file
+4. **Configure** transcription settings
+5. **Start** and watch real-time progress
+6. **View & export** your transcription
+
+📖 **[Complete GUI User Guide](GUI_USER_GUIDE.md)**
+
+---
+
+## Command Line Interface (CLI)
+
+Prefer the terminal? The CLI remains fully supported with all features:
 
 ### Core Features
 - **🔒 Complete Privacy** - All processing happens locally on your machine
